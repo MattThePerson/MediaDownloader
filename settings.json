@@ -1,0 +1,14 @@
+{
+    "base-directory": "...",
+
+    "sites": {
+        "twitter": {
+            "username": "...",
+            "password": "...",
+            "bookmarks": {
+                "browser": "Brave",
+                "folders": ["TwitterArt"]
+            }
+        }
+    }
+}
