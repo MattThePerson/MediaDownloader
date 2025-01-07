@@ -1,14 +1,30 @@
 {
-    "base-directory": "...",
+    "base-directory": "/mnt/a/Whispera/gallery-dl",
 
-    "sites": {
+    "bookmarks": {
         "twitter": {
-            "username": "...",
-            "password": "...",
-            "bookmarks": {
-                "browser": "Brave",
-                "folders": ["TwitterArt"]
-            }
+            "browser": "Brave",
+            "folders": ["TwitterArt"]
+        },
+        "reddit": {
+            "browser": "Brave",
+            "folders": ["RedditGifs"]
+        },
+        "danbooru": {
+            "browser": "Brave",
+            "folders": ["DanbooruArt"]
+        },
+        "redgifs": {
+            "browser": "Brave",
+            "folders": []
+        },
+        "bluesky": {
+            "browser": "Brave",
+            "folders": ["BlueskyArt"]
+        },
+        "tiktok": {
+            "browser": "Brave",
+            "folders": []
         }
     }
 }

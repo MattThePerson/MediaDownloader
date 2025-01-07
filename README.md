@@ -25,10 +25,11 @@
 - **options**: https://github.com/mikf/gallery-dl/blob/master/docs/options.md
 - **config help**: https://gdl-org.github.io/docs/configuration.html#extractor-specific-options
 
-To run with local config:
-`gallery-dl --config .config/gallery-dl.conf <other-options> <url>`
+To run in package dir with local config:
+`gallery-dl --config config/gallery-dl.conf <other-options> <url>`
 
 
 ### Notes
 
-- .config/yt-dlp.conf is empty, but the file needs to exist for gallery-dl to be able to use the venvs yt_dlp
+- config/yt-dlp.conf needs to exist for gallery-dl to be able to use the venvs yt_dlp
+- yt-dlp only really for tiktok
