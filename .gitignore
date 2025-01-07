@@ -3,4 +3,5 @@ gallery-dl/
 venv/
 __pycache__/
 outfiles/
-passwords.json
+logins.json
+data/*

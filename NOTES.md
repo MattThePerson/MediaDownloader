@@ -16,5 +16,7 @@ TEXT        content
 ### Reddit
 
 
+ID          id
+LIKES       ups
 USERNAME    author
 TEXT        content
