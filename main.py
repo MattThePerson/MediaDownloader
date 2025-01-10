@@ -155,31 +155,32 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     fail: list[str] = []
     times = []
     for idx, url in enumerate(urls_to_attempt):
-        start = time.time()
-        print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
-        command = get_gallerydl_command(url, dest, logins, redownload=args.redo_gdl, extra_args=args.extra_args)
-        if args.show_command:
-            print(command)
-        if not (args.only_list and not args.down):
+        command = get_gallerydl_command(url, dest, logins, skip=args.skip, extra_args=args.extra_args)
+        if not (args.no_download and not args.down):
+            print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
+            start = time.time()
             result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=__SCRIPTDIR__)
             times.append(time.time() - start)
             print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], result.returncode))
             if result.returncode > 0:   fail.append(url)
             else:                       succ.append(url)
             log_download(result.returncode, url, idx)
+        else:
+            print('({}/{}) "{}"'.format(idx+1, len(urls_to_attempt), url))
+            if args.show_command:print(command)
     
     return
     
 # HELPER FUNCTIONS
 
-def get_gallerydl_command(url: str, dest: str, logins: dict[str, Any], redownload: bool=False, extra_args: str|None = None):
+def get_gallerydl_command(url: str, dest: str, logins: dict[str, Any], skip: bool=False, extra_args: str|None = None):
 
     # dest = '/mnt/a/Whispera/gallery-dl'
     options = [
         '--config config/gallery-dl.conf',
         f'--destination "{dest}"',
     ]
-    if redownload:
+    if not skip:
         options.append('-o skip=false') # redownload archived files
     
     site = get_url_site(url)
@@ -303,25 +304,28 @@ if __name__ == '__main__':
     parser.add_argument('-gallery', action='store_true', help='Show -h screen for gallery-dl')
     parser.add_argument('-settings_path', action='store_true', help='Print out settings')
     parser.add_argument('--download_folder', '-df', action='store_true', help='Opens the download folder')
+    parser.add_argument('-show_logs', action='store_true',help='Prints out logs')
 
-    parser.add_argument('--url', '-u', help='Pass url to download')
-    parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='Get urls from bookmarks')
-    parser.add_argument('--read-file', '-r', help='Pass file to read urls from')
+    parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
+    parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='[STEP 1] Get urls from bookmarks')
+    parser.add_argument('--read_file', '-r', help='[STEP 1] Pass file to read urls from')
+    parser.add_argument('--from_log', '-fr', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
     parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
-    parser.add_argument('--site', help='Limit urls to site')
     
-    parser.add_argument('-limit', help='Limit for how many urls to handle', type=int)
-    parser.add_argument('-filter', help='Filter for what urls to handle')
-    parser.add_argument('-only_list', action='store_true',help='Only list urls')
-    parser.add_argument('-down',  action='store_true',help='Counteracts -only_list')
-    parser.add_argument('-redo', action='store_true',help='Retries urls added to download log')
-    parser.add_argument('-redo_failed', action='store_true',help='Retries only urls found to have failed to download')
-    parser.add_argument('-redo_gdl', action='store_true',help='Redownloads media already archived as downloaded')
-    parser.add_argument('-show_command', action='store_true',help='Shows download command')
-    parser.add_argument('-show_logs', action='store_true',help='Prints out logs')
-    # parser.add_argument('-', help='')
+    parser.add_argument('-limit', help='[STEP 2] Limit for how many urls to handle', type=int)
+    parser.add_argument('-filter', help='[STEP 2] Filter URLs by string')
+    # parser.add_argument('--site', help='Limit urls to site')
 
+    parser.add_argument('-redo', action='store_true',help='[STEP 3] Retries urls even if previously attempted (according to activity.log)')
+    parser.add_argument('-redo_failed', action='store_true',help='[STEP 3] Retries only urls found to have previously failed (according to activity.log)')
+    # parser.add_argument('-noskip', action='store_true',help='[STEP 3] Dont skip links already downloaded or attempted (stored in archive.sqlite3)')
+    parser.add_argument('-skip', action='store_true',help='[STEP 3] Skip links already downloaded or attempted (stored in archive.sqlite3)')
+
+    parser.add_argument('--no_download', '-nd', action='store_true',help='Dont download, only list urls')
+    parser.add_argument('-down',  action='store_true',help='Counteracts --only_list') # eh?
+    parser.add_argument('-show_command', action='store_true',help='Shows download command')
+    
     parser.add_argument('-test', '--use_test_urls', action='store_true', help='Test downloading')
     
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Capture undefined arguments to pass to a shell script")

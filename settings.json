@@ -25,6 +25,9 @@
         "tiktok": {
             "browser": "Brave",
             "folders": []
+        },
+        "rule34": {
+            "": ""
         }
     }
 }
