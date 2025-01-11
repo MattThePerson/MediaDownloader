@@ -5,3 +5,4 @@ __pycache__/
 outfiles/
 logins.json
 data/*
+*.ipynb

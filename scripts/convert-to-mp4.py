@@ -11,5 +11,5 @@ if __name__ == '__main__':
 
         command = f'ffmpeg -hide_banner -loglevel error -stats -i "{pth}" -c copy "{new_pth}" -n'
         subprocess.run(shlex.split(command))
-        subprocess.run(shlex.split(f"rm '{pth}'"))
+        subprocess.run(shlex.split(f'rm "{pth}"'))
 

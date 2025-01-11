@@ -72,6 +72,15 @@ def test_bm():
 
 """ TESTS END """
 
+
+
+
+
+
+
+
+
+
 def main(args: argparse.Namespace, settings: dict[str, Any]):
     
     # [STEP 0] HANDLE NON DOWNLOAD OPTIONS
@@ -123,6 +132,10 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         
     elif args.use_test_urls:
         urls_to_attempt.extend(get_test_urls())
+    
+    elif args.from_logs:
+        print('[URLS] Using attempted URLs ...')
+        urls_to_attempt = attempted_urls
     
     else:
         print('Please give me urls, either through --bookmarks, --read-file or URL')
@@ -271,7 +284,7 @@ def get_download_log():
                     only_succ.append(url)
                 else:
                     only_fail.append(url)
-    return all, only_succ, only_fail
+    return list(set(all)), list(set(only_succ)), list(set(only_fail))
 
 def open_in_explorer(wsl_path):
     result = subprocess.run(["wslpath", "-w", wsl_path], capture_output=True, text=True)
@@ -309,7 +322,7 @@ if __name__ == '__main__':
     parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
     parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='[STEP 1] Get urls from bookmarks')
     parser.add_argument('--read_file', '-r', help='[STEP 1] Pass file to read urls from')
-    parser.add_argument('--from_log', '-fr', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
+    parser.add_argument('--from_logs', '-fr', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
     parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
     
@@ -331,6 +344,8 @@ if __name__ == '__main__':
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Capture undefined arguments to pass to a shell script")
     
     args = parser.parse_args()
+    if args.extra_args:
+        args.extra_args = args.extra_args[1:]
     
     settingsHandler = JsonHandler('settings.json', readonly=True)
     
