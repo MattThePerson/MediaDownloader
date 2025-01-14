@@ -2,12 +2,14 @@ import time
 import subprocess
 import shlex
 import sys
+from pathlib import Path
 import os
 import argparse
 from typing import Any
 from datetime import datetime
 from util import BookmarksGetter
 from util import JsonHandler
+from dataclasses import dataclass
 
 __SCRIPTDIR__ = os.path.dirname(os.path.abspath(__file__))
 __LOGFILE__ = os.path.join( __SCRIPTDIR__, 'data/activity.log' )
@@ -75,8 +77,9 @@ def test_bm():
 
 
 
-
-
+@dataclass
+class Global:
+    last_login: str = ''
 
 
 
@@ -123,8 +126,10 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     
     elif args.read_file: # -i, --input-file FILE       Download URLs found in FILE ('-' for stdin).
         print('[URLS] Feature not implemented')
-        # urls_to_attempt = ...
-        return
+        print(args.read_file)
+        with open(args.read_file, 'r') as f:
+            for line in f:
+                urls_to_attempt.append(line.strip())
     
     elif args.bookmarks:
         print('[URLS] Retrieving urls from bookmarks ...')
@@ -202,6 +207,9 @@ def get_gallerydl_command(url: str, dest: str, logins: dict[str, Any], skip: boo
         if site_logins:
             options.append( '--username ' + site_logins.get('username') )
             options.append( '--password ' + site_logins.get('password') )
+            if site != Global.last_login:
+                print(f"[COMMAND] Using logins for '{site}'")
+                Global.last_login = site
     
     options_str = ' '.join(options)
     command = f'venv/bin/gallery-dl {options_str} "{url}"'
@@ -214,12 +222,11 @@ def get_url_site(url):
         return 'twitter'
     if 'bsky.app' in url:
         return 'bluesky'
-    url = url.replace('https://', '')
-    parts = url.split('/')
-    for site in ['reddit', 'twitter', 'danbooru', 'tiktok', 'redgifs']:
-        if site in parts[0]:
-            return site
-    return None
+    # url = url.replace('https://', '')
+    dot_parts = url.split('.')
+    if len(dot_parts) < 2:
+        return None
+    return dot_parts[1]
     
     #¤ https://x.com/home
     

@@ -1,10 +1,5 @@
 import sys
-import os
-from pathlib import Path
-import requests
-import time
-import markdown
-from bs4 import BeautifulSoup
+
 
 # 
 def extract_text_from_markdown(markdown_text):
@@ -19,10 +14,12 @@ def get_comments_from_data(data):
     while queue != []:
         item = queue.pop(0)
         if isinstance(item, dict):
-            for k, v in item.items():
-                if k == 'body':
-                    comments.append(extract_text_from_markdown(v))
-                else:
+            if 'body' in item:
+                comment_body = extract_text_from_markdown(item.get('body'))
+                author = item.get('author')
+                comments.append({'author': author, 'body': comment_body})
+            for v in item.values():
+                if isinstance(v, dict) or isinstance(v, list):
                     queue.append(v)
         elif isinstance(item, list):
             queue.extend(item)
@@ -48,12 +45,14 @@ def get_page_data(post_id, timeout=5, max_reps=3):
 # 
 def get_comments_from_reddit_post(post_id):
     data = get_page_data(post_id)
-    comments = get_comments_from_data(data)
+    comment_objects = get_comments_from_data(data)
+    ignore_users = ['AutoModerator']
+    comments = [ obj['body'] for obj in comment_objects if obj['author'] not in ignore_users ]
     return comments
 
 
 def main(media_path, post_id):
-    print('[REDDIT COMMENT SCRAPER] Scraping reddit comments for post: \'{}\' ... '.format(post_id), end='')
+    print('Scraping reddit comments for: \'{}\' ... '.format(post_id), end='')
     metadata_filepath = os.path.join( Path(media_path).parent, f'{post_id}.txt' )
     comments = get_comments_from_reddit_post(post_id)
     if comments == None:
@@ -68,5 +67,17 @@ def main(media_path, post_id):
 
 
 if __name__ == '__main__':
+    
+    if len(sys.argv) > 3:
+        if int(sys.argv[3]) > 1:
+            exit(0)
+    
+    import os
+    from pathlib import Path
+    import requests
+    import time
+    import markdown
+    from bs4 import BeautifulSoup
+    
     main(sys.argv[1], sys.argv[2])
 
