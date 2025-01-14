@@ -1,7 +1,9 @@
+""" 
+TODO:
+- Make argument "-d ." for downloading in different directory work
+"""
 import time
 import subprocess
-import shlex
-import sys
 from pathlib import Path
 import os
 import argparse
@@ -9,80 +11,19 @@ from typing import Any
 from datetime import datetime
 from util import BookmarksGetter
 from util import JsonHandler
-from dataclasses import dataclass
+
+from downloaders import gallerydl_downloader, _3dhentai_downloader
+
+Downloaders = {
+    'gallery-dl': gallerydl_downloader,
+    '3dhentai-dl': _3dhentai_downloader
+}
 
 __SCRIPTDIR__ = os.path.dirname(os.path.abspath(__file__))
 __LOGFILE__ = os.path.join( __SCRIPTDIR__, 'data/activity.log' )
 
-""" 
-TODO:
-- Make argument "-d ." for downloading in different directory work
-"""
 
-
-
-""" TESTS """
-def get_test_urls():
-    TEST_URLS = [
-        # TWITTER 0-5
-        'https://x.com/EroticNansensu/status/1876358077525770543',
-        'https://x.com/cyanafterhours/status/1873931176731451493/', # two images, quote tweet
-        'https://x.com/SenseiAnother/status/1876256590954950696', # video
-        'https://x.com/die_scope/status/1876347523205628156', # HashTags
-
-        'https://x.com/emiillb/status/187636099975186', # Doesnt exits
-        'https://x.com/AfterDarkWasa/status/1876469006116487184', # NO MEDIA, JUST TWEET
-
-        # REDDIT 6-13
-        'https://www.reddit.com/r/LenaPaul/comments/1hv9c96/lena_riding/', # gif
-        'https://www.reddit.com/r/LenaPaul/comments/1hvm8b7/fucking_lena_nonstop/', # gif
-        'https://www.reddit.com/r/InvaderVie/comments/1hvmujx/hotter_than_ever/', # multiple images
-        'https://www.reddit.com/r/GOONED/comments/1hve0ld/2025_year_of_the_gooners_tell_me_your_favorite_3/', # multiple gifs
-        'https://www.reddit.com/r/GOONED/comments/1hvjy75/are_any_of_these_making_you_hard_would_love_to/', # multiple gifs & pics
-        'https://www.reddit.com/r/DuaLipaGW/comments/1hql2b0/dua_lipa_squatting/', # reddit gif
-        'https://www.reddit.com/r/WhaleTails/comments/1hv5kl9/my_husband_just_took_pics_instead_of_telling_me/', # image
-        'https://www.reddit.com/r/DuaLipaGW/comments/1hqid7y/dua_lipa_ig_post/', # multiple images
-
-        # DANBOORU 14-
-        'https://danbooru.donmai.us/posts/8673626', #
-        
-        # BLUE SKY
-        'https://bsky.app/profile/blueafterdark.bsky.social/post/3lf4aib4ic72b', # single
-        'https://bsky.app/profile/goldy3d.bsky.social/post/3leykqg6qbc2f', # two images
-        'https://bsky.app/profile/pervbrain.bsky.social/post/3lexyk5le6k24', # 3 images
-        'https://bsky.app/profile/spring-bot.bsky.social/post/3lf4dkejxok2l', # video, tags
-        
-        # TIKTOK
-        'https://www.tiktok.com/@generationofrationale/video/7445397898239495467',
-        
-        # RED GIFS
-    ]
-    filtered = [ u for u in TEST_URLS if 'bsky.app' in u ]
-    return filtered
-    
-
-def test_bm():
-    print('in test 2')
-    
-    bookmarks = BookmarksGetter()
-    bookmarks = bookmarks.get_bookmarks('brave', 'Art')
-    print(len(bookmarks))
-    for b in bookmarks:
-        print()
-        for k, v in b.items():
-            print('{:<20}: {}'.format(k, v))
-
-""" TESTS END """
-
-
-
-
-@dataclass
-class Global:
-    last_login: str = ''
-
-
-
+#### MAIN ####
 
 def main(args: argparse.Namespace, settings: dict[str, Any]):
     
@@ -135,9 +76,6 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         print('[URLS] Retrieving urls from bookmarks ...')
         urls_to_attempt = get_urls_from_bookmarks(args, settings)
         
-    elif args.use_test_urls:
-        urls_to_attempt.extend(get_test_urls())
-    
     elif args.from_logs:
         print('[URLS] Using attempted URLs ...')
         urls_to_attempt = attempted_urls
@@ -172,65 +110,36 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     succ: list[str] = []
     fail: list[str] = []
     times = []
+    downloader_options: dict = settings.get('downloaders', {})
     for idx, url in enumerate(urls_to_attempt):
-        command = get_gallerydl_command(url, dest, logins, skip=args.skip, extra_args=args.extra_args)
-        if not (args.no_download and not args.down):
-            print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
-            start = time.time()
-            result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=__SCRIPTDIR__)
-            times.append(time.time() - start)
-            print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], result.returncode))
-            if result.returncode > 0:   fail.append(url)
-            else:                       succ.append(url)
-            log_download(result.returncode, url, idx)
+        
+        downloader_func = None
+        for exp, dl_name in downloader_options.items():
+            if exp == '' or eval(exp):
+                downloader_func = Downloaders.get(dl_name)
+                break
+        if downloader_func == None:
+            print('ERROR: downloader_func is None')
         else:
-            print('({}/{}) "{}"'.format(idx+1, len(urls_to_attempt), url))
-            if args.show_command:print(command)
+            if not (args.no_download and not args.down):
+                print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
+                start = time.time()
+                returncode = downloader_func(args, url, dest, logins) # DOWNLOADER
+                times.append(time.time() - start)
+                print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], returncode))
+                if returncode > 0:   fail.append(url)
+                else:                succ.append(url)
+                log_download(returncode, url, idx)
+            else:
+                print('({}/{}) "{}"'.format(idx+1, len(urls_to_attempt), url))
+                if args.show_command:
+                    print("-command is DEPRECATED!!")
     
     return
-    
+
+
+
 # HELPER FUNCTIONS
-
-def get_gallerydl_command(url: str, dest: str, logins: dict[str, Any], skip: bool=False, extra_args: str|None = None):
-
-    # dest = '/mnt/a/Whispera/gallery-dl'
-    options = [
-        '--config config/gallery-dl.conf',
-        f'--destination "{dest}"',
-    ]
-    if not skip:
-        options.append('-o skip=false') # redownload archived files
-    
-    site = get_url_site(url)
-    if site:
-        site_logins = logins.get(site)
-        if site_logins:
-            options.append( '--username ' + site_logins.get('username') )
-            options.append( '--password ' + site_logins.get('password') )
-            if site != Global.last_login:
-                print(f"[COMMAND] Using logins for '{site}'")
-                Global.last_login = site
-    
-    options_str = ' '.join(options)
-    command = f'venv/bin/gallery-dl {options_str} "{url}"'
-    if extra_args:
-        command += ' ' + ' '.join(extra_args)
-    return command
-
-def get_url_site(url):
-    if 'x.com' in url:
-        return 'twitter'
-    if 'bsky.app' in url:
-        return 'bluesky'
-    # url = url.replace('https://', '')
-    dot_parts = url.split('.')
-    if len(dot_parts) < 2:
-        return None
-    return dot_parts[1]
-    
-    #¤ https://x.com/home
-    
-    return usr, pss
 
 # get_urls_from_bookmarks
 def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]):
@@ -250,7 +159,6 @@ def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]):
         sites = [args.bookmarks]
     
     print('Getting bookmarks from following sites:', sites)
-
     bmGetter = BookmarksGetter()
     urls: list[Any] = []
     for site in sites:
@@ -299,7 +207,6 @@ def open_in_explorer(wsl_path):
         raise ValueError(f"Failed to convert path: {result.stderr.strip()}")
     windows_path = result.stdout.strip()
     subprocess.run(["explorer.exe", windows_path])
-
 
 def print_url_download_info(idx, count, url, succN, failN, times):
     dt = datetime.now().strftime('%H:%M:%S')
@@ -353,6 +260,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.extra_args:
         args.extra_args = args.extra_args[1:]
+    
+    args.scriptdir = __SCRIPTDIR__
     
     settingsHandler = JsonHandler('settings.json', readonly=True)
     

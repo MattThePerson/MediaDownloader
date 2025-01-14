@@ -68,10 +68,11 @@ class JsonHandler:
         return list(self.jsonObject.items())
     
     def load(self):
-        #print("Loading json ...")
         try:
-            with open(self.filepath, 'r') as openfile:
-                jsonObject = json.load(openfile)
+            with open(self.filepath, 'r') as f:
+                json_with_comments = f.read()
+            json_wout_comments = self.remove_comments_lines(json_with_comments)
+            jsonObject = json.loads(json_wout_comments)
             return jsonObject
         except:
             return {}
@@ -97,6 +98,11 @@ class JsonHandler:
         print("Saving backup to: ", savepath)
         shutil.copyfile(self.filepath, savepath)
 
+    @staticmethod
+    def remove_comments_lines(json_with_comments):
+        lines = json_with_comments.splitlines()
+        uncommented_lines = [ line for line in lines if not line.strip().startswith('//') ]
+        return "\n".join(uncommented_lines)
 
 
 

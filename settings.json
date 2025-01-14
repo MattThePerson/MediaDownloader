@@ -1,6 +1,12 @@
 {
     "base-directory": "/mnt/a/Whispera/gallery-dl",
 
+    // define downloaders for different urls
+    "downloaders": {
+        "'3dhentai' in url.lower()": "3dhentai-dl",
+        "": "gallery-dl"
+    },
+    
     "bookmarks": {
         "twitter": {
             "browser": "Brave",
@@ -32,6 +38,10 @@
         "pornhub": {
             "browser": "Brave",
             "folders": ["PornhubGifs"]
+        },
+        "3dhentai": {
+            "browser": "Brave",
+            "folders": ["3dHentai"]
         }
     }
 }
