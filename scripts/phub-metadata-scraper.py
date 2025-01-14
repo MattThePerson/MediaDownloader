@@ -15,8 +15,10 @@ def main(viewkey, directory):
         data = fetch_video_data_phub(viewkey)
         metadata_filepath = os.path.join(directory, f'{viewkey}.txt')
         if data:
+            data['upvotes'] = int(int(data['ratings']) * float(data['rating']))
+            data['tags'] = [ t for t in data['tags'] if t.lower not in ['teen 18 1', '60fps 1'] ]
             with open(metadata_filepath, 'w') as f:
-                for key in ["title", "uploader", "uploade_date", "views", "rating", "tags", "categories", "pornstars"]:
+                for key in ["title", "uploader", "uploade_date", "views", "upvotes", "rating", "ratings", "tags", "categories", "pornstars"]:
                     f.write(f'{key}={str(data.get(key))}\n')
             print('Done.')
         else:

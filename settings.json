@@ -28,6 +28,10 @@
         },
         "rule34": {
             "": ""
+        },
+        "pornhub": {
+            "browser": "Brave",
+            "folders": ["PornhubGifs"]
         }
     }
 }
