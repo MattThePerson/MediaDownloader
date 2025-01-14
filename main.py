@@ -44,7 +44,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         else:
             print('Error: no base-directory')
     
-    elif args.show_logs:
+    elif args.logs:
         print('\n #### DOWNLOAD LOG ####\n')
         for line in open(__LOGFILE__, 'r'):
             if line != '\n':
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     parser.add_argument('-gallery', action='store_true', help='Show -h screen for gallery-dl')
     parser.add_argument('-settings_path', action='store_true', help='Print out settings')
     parser.add_argument('--download_folder', '-df', action='store_true', help='Opens the download folder')
-    parser.add_argument('-show_logs', action='store_true',help='Prints out logs')
+    parser.add_argument('-logs', action='store_true',help='Prints out logs')
 
     parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
     parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='[STEP 1] Get urls from bookmarks')
