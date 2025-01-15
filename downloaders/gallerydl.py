@@ -11,21 +11,26 @@ class Global:
 
 
 # Downloader
-def gallerydl_downloader(args, url, dest, logins):
-    command = get_gallerydl_command(url, dest, logins, skip=args.skip, extra_args=args.extra_args)
+def gallerydl_downloader(args, url, dest, settings):
+    command = get_gallerydl_command(url, dest, settings, skip=args.skip, extra_args=args.extra_args, presets=args.preset)
     result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=args.scriptdir)
     return result.returncode
 
 
-def get_gallerydl_command(url: str, dest: str, logins: dict[str, Any], skip: bool=False, extra_args: str|None = None):
+def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], skip: bool=False, extra_args: str|None = None, presets: str|None = None):
 
-    # dest = '/mnt/a/Whispera/gallery-dl'
+    logins = settings.get('logins', {})
+
     options = [
-        '--config config/gallery-dl.conf',
+        f'--config config/gallery-dl.conf',
         f'--destination "{dest}"',
     ]
     if not skip:
         options.append('-o skip=false') # redownload archived files
+    
+    if presets:
+        preset_args = settings.get('presets', {}).get(presets)
+        options.append(preset_args)
     
     site = get_url_site(url)
     if site:
@@ -40,7 +45,7 @@ def get_gallerydl_command(url: str, dest: str, logins: dict[str, Any], skip: boo
     options_str = ' '.join(options)
     command = f'venv/bin/gallery-dl {options_str} "{url}"'
     if extra_args:
-        command += ' ' + ' '.join(extra_args)
+        command += ' ' + ' '.join([ f'"{part}"' if ' ' in part else part for part in extra_args ])
     return command
 
 def get_url_site(url):

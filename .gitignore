@@ -6,3 +6,4 @@ outfiles/
 logins.json
 data/*
 *.ipynb
+cookies/

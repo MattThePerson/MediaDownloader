@@ -6,6 +6,13 @@
         "'3dhentai' in url.lower()": "3dhentai-dl",
         "": "gallery-dl"
     },
+
+    // arguments passed to gallery-dl
+    "presets": {
+        "slower":           "--sleep 1 --limit-rate 500k",
+        "instagram":        "--sleep 7 --sleep-extractor 5 --limit-rate 200k --filesize-max 100M",
+        "instagram-nostop": "--sleep 7 --sleep-extractor 5 --limit-rate 200k --filesize-max 100M --retries -1"
+    },
     
     "bookmarks": {
         "twitter": {

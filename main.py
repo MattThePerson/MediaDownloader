@@ -4,6 +4,7 @@ TODO:
 """
 import time
 import subprocess
+import shlex
 from pathlib import Path
 import os
 import argparse
@@ -32,8 +33,19 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     if args.gallery:
         subprocess.run(['gallery-dl', '-h'])
         
-    elif args.settings_path:
-        print(settings['settings_filepath'])
+    elif args.settings:
+        settings_fp = str(settings.get('settings_filepath'))
+        if isinstance(args.settings, str):
+            command = '{} "{}"'.format(args.settings, settings_fp)
+            print(command)
+            subprocess.run(shlex.split(command))
+        else:
+            print('Settings in "{}"\n'.format(settings_fp))
+            with open(settings_fp, 'r') as f:
+                for line in f:
+                    if line.strip() != '':
+                        print(line)
+            print('\nTo edit settings pass program name (eg. -settings nano)')
         
     elif args.download_folder:
         df = settings.get('base-directory')
@@ -101,7 +113,6 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
 
     # [STEP 2] DOWNLOAD
     
-    logins = settings.get('logins', {})
     dest = settings.get('base-directory', '')
     if args.destination:
         dest = args.destination
@@ -124,7 +135,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
             if not (args.no_download and not args.down):
                 print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
                 start = time.time()
-                returncode = downloader_func(args, url, dest, logins) # DOWNLOADER
+                returncode = downloader_func(args, url, dest, settings) # DOWNLOADER
                 times.append(time.time() - start)
                 print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], returncode))
                 if returncode > 0:   fail.append(url)
@@ -226,60 +237,73 @@ def format_time_difference(diff):
 
 # START
 if __name__ == '__main__':
+    print()
     parser = argparse.ArgumentParser("Wrapper utility for gallery-dl")
     
     parser.add_argument('-gallery', action='store_true', help='Show -h screen for gallery-dl')
-    parser.add_argument('-settings_path', action='store_true', help='Print out settings')
-    parser.add_argument('--download_folder', '-df', action='store_true', help='Opens the download folder')
+    parser.add_argument('-settings', default=None, const=True, nargs="?", help='Print out settings (no args) or open in [nano, vim, code, ...]')
+    parser.add_argument('--download-folder', '-df', action='store_true', help='Opens the download folder')
     parser.add_argument('-logs', action='store_true',help='Prints out logs')
 
+    # [STEP 1] URL GETTINGS
     parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
     parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='[STEP 1] Get urls from bookmarks')
-    parser.add_argument('--read_file', '-r', help='[STEP 1] Pass file to read urls from')
-    parser.add_argument('--from_logs', '-fr', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
+    parser.add_argument('--read-file', '-r', help='[STEP 1] Pass file to read urls from')
+    parser.add_argument('--from-logs', '-fr', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
-    parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
-    
+    # [STEP 2] URL FILTERING
     parser.add_argument('-limit', help='[STEP 2] Limit for how many urls to handle', type=int)
     parser.add_argument('-filter', help='[STEP 2] Filter URLs by string')
-    # parser.add_argument('--site', help='Limit urls to site')
 
-    parser.add_argument('-redo', action='store_true',help='[STEP 3] Retries urls even if previously attempted (according to activity.log)')
-    parser.add_argument('-redo_failed', action='store_true',help='[STEP 3] Retries only urls found to have previously failed (according to activity.log)')
-    # parser.add_argument('-noskip', action='store_true',help='[STEP 3] Dont skip links already downloaded or attempted (stored in archive.sqlite3)')
-    parser.add_argument('-skip', action='store_true',help='[STEP 3] Skip links already downloaded or attempted (stored in archive.sqlite3)')
+    # [STEP 3] DOWNLOAD OPTIONS
+    parser.add_argument('-preset', help='Use preset arguments for gallery-dl')
+    parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
+    parser.add_argument('-redo', action='store_true', help='[STEP 3] Retries urls even if previously attempted (according to activity.log)')
+    parser.add_argument('-redo-failed', action='store_true', help='[STEP 3] Retries only urls found to have previously failed (according to activity.log)')
+    parser.add_argument('-skip', action='store_true', help='[STEP 3] Skip links already downloaded or attempted (stored in archive.sqlite3)')
 
-    parser.add_argument('--no_download', '-nd', action='store_true',help='Dont download, only list urls')
-    parser.add_argument('-down',  action='store_true',help='Counteracts --only_list') # eh?
-    parser.add_argument('-show_command', action='store_true',help='Shows download command')
+    parser.add_argument('--no-download', '-nd', action='store_true', help='Dont download, only list urls')
+    parser.add_argument('-down', action='store_true', help='Counteracts --no-download')
+    #parser.add_argument('-show-command', action='store_true', help='Shows download command') # DEPRECATED !!
     
-    parser.add_argument('-test', '--use_test_urls', action='store_true', help='Test downloading')
-    
+    parser.add_argument('-test', '--use-test-urls', action='store_true', help='Test downloading') # NOT IN USE
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Capture undefined arguments to pass to a shell script")
     
+    # make args
     args = parser.parse_args()
     if args.extra_args:
         args.extra_args = args.extra_args[1:]
-    
     args.scriptdir = __SCRIPTDIR__
     
+    # generate settings
     settingsHandler = JsonHandler('settings.json', readonly=True)
+    settings = {}
+    for k, v in settingsHandler.getItems():
+        settings[k] = v
+    loginHandler = JsonHandler('logins.json')
+    settings['logins'] = loginHandler.jsonObject
+    settings['settings_filepath'] = settingsHandler.filepath
     
-    download_dir = settingsHandler.getValue('base-directory')
+    # handle download dir
+    download_dir = settings.get('base-directory')
     if not download_dir:
         print('[SETTINGS] No base-directory defined in settings.json')
     elif not os.path.exists(download_dir):
         print('Download dir doesnt exist, making dirs:\n  "{}"'.format(download_dir))
         os.makedirs(download_dir, exist_ok=True)
     
-    settings = {}
-    for k, v in settingsHandler.getItems():
-        settings[k] = v
+    # gallery-dl presets
+    if args.preset:
+        preset_args = settings.get('presets', {}).get(args.preset)
+        if preset_args == None:
+            print('Preset called "{}" doesnt exist in settings.json'.format(args.preset))
+            exit(1)
+        else:
+            print('Using gallery-dl presets: "{}"'.format(preset_args))
     
-    loginHandler = JsonHandler('logins.json')
-    settings['logins'] = loginHandler.jsonObject
-    
-    settings['settings_filepath'] = settingsHandler.filepath
+    # 
+    if args.extra_args:
+        print('Passing arguments to gallery-dl: "{}"'.format(args.extra_args))
     
     print()
     try:

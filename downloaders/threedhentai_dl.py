@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup as BS
 
 
-def _3dhentai_downloader(args, url, dest, logins):
+def _3dhentai_downloader(args, url, dest, settings):
     data = get_info_3dhentai(url)
     if data:
         video_link = data.get('download_src')
