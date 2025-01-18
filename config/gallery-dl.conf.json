@@ -1,17 +1,19 @@
 {
-
+    // test comment
 
 
     "extractor":
     {
         "base-directory": "./",
 
+        // set global archive file for all extractors
         "#archive": "./gallery-dl/archive.sqlite3",
         "archive-pragma": ["journal_mode=WAL", "synchronous=NORMAL"],
 
-
+        // add two custom keywords into the metadata dictionary
+        // these can be used to further refine your output directories or filenames
         "keywords": {"bkey": "", "ckey": ""},
-
+        // make sure that custom keywords are empty, i.e. they don't appear unless specified by the user
         "keywords-default": "",
 
         "extension-map": {
@@ -45,6 +47,9 @@
 
 
 
+        // ===============================================================
+        // ====    Site-specific Extractor Options    ====================
+        // ===============================================================
 
         "twitter":
         {
@@ -59,11 +64,13 @@
         
         "reddit":
         {
-
+            // only spawn child extractors for links to specific sites
             "whitelist": ["imgur", "redgifs"],
 
+            // put files from child extractors into the reddit directory
             "parent-directory": true,
 
+            // transfer metadata to any child extractor as '_reddit'
             "parent-metadata": "_reddit",
 
             "postprocessors": ["json-metadata", "scrape-reddit-comments"],
@@ -73,7 +80,7 @@
                 "":             "[{date}] {title} [{id}].{extension}"
             },
             "directory": ["reddit", "{subreddit}"]
-
+            // "abort": true
         },
 
 
@@ -117,15 +124,15 @@
             "ugoira": true,
             
             "postprocessors": ["json-metadata"]
-
-
-
-
-
-
-
-
-
+            // "postprocessors": [
+            //     {
+            //         "name" : "metadata",
+            //         "event": "post",
+            //         "filename": "{post_id|tweet_id|id}.txt",
+            //         "mode" : "custom",
+            //         "format": "score={score}\n tags_artist={tags_artist}\n tags_character={tags_character}\n tags_copyright={tags_copyright}\n tags_general={tags_general}\n"
+            //     }
+            // ]
         },
 
 
@@ -135,15 +142,15 @@
             },
             "directory": ["rule34", "{uploader[name]}"],
             "postprocessors": ["json-metadata"]
-
-
-
-
-
-
-
-
-
+            // "postprocessors": [
+            //     {
+            //         "name" : "metadata",
+            //         "event": "post",
+            //         "filename": "{post_id|tweet_id|id}.txt",
+            //         "mode" : "custom",
+            //         "format": "score={score}\n tags_string={tags}\n"
+            //     }
+            // ]
         },
         
 
@@ -158,7 +165,7 @@
 
 
         "instagram": {
-
+            //"cookies": "cookies/instagram_cookies.txt",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
             "filename": {
                 "count > 1":    "[{date}] {filename} (item-{num}) [{post_shortcode}].{extension}",
@@ -185,9 +192,11 @@
             },
             "directory": ["patreon", "{creator['vanity']}"]
         },
-
-
-
+        
+        
+        // ===============================================================
+        // OTHER
+        // ===============================================================
         
         "ytdl":
         {
@@ -304,19 +313,25 @@
 
     "downloader":
     {
-
-
-
+        // HUOM: min and max filesize options not currently working! (Jan 2025)
+        // "filesize-min": "2048",
+        
+        // restrict download speed to 1 MB/s
         "rate": "1M",
 
+        // show download progress indicator after 2 seconds
         "progress": 2.0,
 
+        // retry failed downloads up to 3 times
         "retries": 3,
 
+        // consider a download 'failed' after 8 seconds of inactivity
         "timeout": 8.0,
 
+        // write '.part' files into a special directory
         "part-directory": "/tmp/.download/",
 
+        // "do not update file modification times
         "mtime": false,
 
         "ytdl":
@@ -363,9 +378,11 @@
         }
     },
 
+
+    // POSTPROCESSORS
     "postprocessor":
     {
-
+        // metadata
         "json-metadata": {
             "name": "metadata",
             "event": "post",
@@ -385,10 +402,10 @@
         "content":
         {
             "name" : "metadata",
-
+             // write data for every post instead of each individual file
             "event": "post",
             "filename": "{post_id|tweet_id|id}.txt",
-
+             // write only the values for 'content' or 'description'
             "mode" : "custom",
             "format": "title={title}\n content={content|description}\n likes={favorite_count|ups|likes|likes_count}\n upvote_ratio={upvote_ratio}\n views={views}\n tags={tags}\n"
         },
@@ -402,6 +419,8 @@
             "format": "title={title}\n content={content|description}\n likes={favorite_count|ups|likes|likes_count}\n author={author}\n upvote_ratio={upvote_ratio}\n views={views}\n tags={tags}\n"
         },
 
+        
+        // Custom Execs
 
         "video-convert-mp4-call-python": {
             "name": "exec",

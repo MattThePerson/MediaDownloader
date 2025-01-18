@@ -2,6 +2,7 @@
 TODO:
 - Make argument "-d ." for downloading in different directory work
 """
+import re
 import time
 import subprocess
 import shlex
@@ -249,7 +250,7 @@ if __name__ == '__main__':
     parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
     parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='[STEP 1] Get urls from bookmarks')
     parser.add_argument('--read-file', '-r', help='[STEP 1] Pass file to read urls from')
-    parser.add_argument('--from-logs', '-fr', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
+    parser.add_argument('--from-logs', '-fl', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
     # [STEP 2] URL FILTERING
     parser.add_argument('-limit', help='[STEP 2] Limit for how many urls to handle', type=int)
@@ -264,7 +265,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--no-download', '-nd', action='store_true', help='Dont download, only list urls')
     parser.add_argument('-down', action='store_true', help='Counteracts --no-download')
-    #parser.add_argument('-show-command', action='store_true', help='Shows download command') # DEPRECATED !!
+    parser.add_argument('-show-command', action='store_true', help='Shows download command') # DEPRECATED !!
     
     parser.add_argument('-test', '--use-test-urls', action='store_true', help='Test downloading') # NOT IN USE
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Capture undefined arguments to pass to a shell script")
@@ -274,6 +275,17 @@ if __name__ == '__main__':
     if args.extra_args:
         args.extra_args = args.extra_args[1:]
     args.scriptdir = __SCRIPTDIR__
+
+    # process gallerydl config file (remove comments)
+    gdl_config = 'config/gallery-dl.conf'
+    gdl_config_comments = gdl_config + '.json'
+    if os.path.exists(gdl_config_comments):
+        with open(gdl_config_comments, 'r') as infile:
+            content = infile.read()
+            clean_content = re.sub(r'^\s*//.*', '', content, flags=re.M)
+        with open(gdl_config, 'w') as outfile:
+            outfile.write(clean_content)
+    args.gallerydl_config_file = gdl_config
     
     # generate settings
     settingsHandler = JsonHandler('settings.json', readonly=True)

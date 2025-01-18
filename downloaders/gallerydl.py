@@ -12,19 +12,22 @@ class Global:
 
 # Downloader
 def gallerydl_downloader(args, url, dest, settings):
-    command = get_gallerydl_command(url, dest, settings, skip=args.skip, extra_args=args.extra_args, presets=args.preset)
+    command = get_gallerydl_command(url, dest, settings, skip=args.skip, extra_args=args.extra_args, presets=args.preset, config_file=args.gallerydl_config_file)
     result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=args.scriptdir)
     return result.returncode
 
 
-def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], skip: bool=False, extra_args: str|None = None, presets: str|None = None):
+def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], skip: bool=False, extra_args: str|None = None, presets: str|None = None, config_file: str|None = None):
 
     logins = settings.get('logins', {})
 
     options = [
-        f'--config config/gallery-dl.conf',
         f'--destination "{dest}"',
+        f'--cookies cookies/cookies.txt'
     ]
+    if config_file:
+        options.append(f'--config {config_file}')
+        
     if not skip:
         options.append('-o skip=false') # redownload archived files
     

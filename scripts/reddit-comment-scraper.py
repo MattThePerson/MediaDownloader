@@ -50,20 +50,29 @@ def get_comments_from_reddit_post(post_id):
     comments = [ obj['body'] for obj in comment_objects if obj['author'] not in ignore_users ]
     return comments
 
+# 
+def is_unwanted_comment(comment):
+    if comment in ['[removed]', '[deleted]', 'Comment removed by moderator']:
+        return True
+    if "^^I'm ^^a ^^bot" in comment:
+        return True
+    return False
+
 
 def main(media_path, post_id):
     print('Scraping reddit comments for: \'{}\' ... '.format(post_id), end='')
-    metadata_filepath = os.path.join( Path(media_path).parent, f'{post_id}.txt' )
+    metadata_dir = os.path.join( Path(media_path).parent, '.metadata')
+    os.makedirs(metadata_dir, exist_ok=True)
+    metadata_filepath = os.path.join( metadata_dir, f'{post_id}-comments.json'  )
     comments = get_comments_from_reddit_post(post_id)
     if comments == None:
         print('THAT DIDNT WORK')
-    else:
-        print('found {} comments'.format(len(comments)))
-        with open(metadata_filepath, 'a') as f:
-            for comment in comments:
-                if comment not in ['[removed]', '[deleted]', 'Comment removed by moderator'] and "^^I'm ^^a ^^bot." not in comment:
-                    comment = comment.replace('\n', '')
-                    f.write(f'comment="{comment}"\n')
+        return
+    comments = [ c for c in comments if not is_unwanted_comment(c) ]
+    data = {'comments': comments}
+    print('found {} comments'.format(len(comments)))
+    with open(metadata_filepath, 'w') as f:
+        json.dump(data, f, indent=4)
 
 
 if __name__ == '__main__':
@@ -77,6 +86,7 @@ if __name__ == '__main__':
     import requests
     import time
     import markdown
+    import json
     from bs4 import BeautifulSoup
     
     main(sys.argv[1], sys.argv[2])

@@ -7,3 +7,4 @@ logins.json
 data/*
 *.ipynb
 cookies/
+test*

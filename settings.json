@@ -10,11 +10,15 @@
     // arguments passed to gallery-dl
     "presets": {
         "slower":           "--sleep 1 --limit-rate 500k",
-        "instagram":        "--sleep 7 --sleep-extractor 5 --limit-rate 200k --filesize-max 100M",
-        "instagram-nostop": "--sleep 7 --sleep-extractor 5 --limit-rate 200k --filesize-max 100M --retries -1"
+        "instagram":        "--sleep 3 --sleep-extractor 3 --limit-rate 200k",
+        "instagram-nostop": "--sleep 7 --sleep-extractor 5 --limit-rate 200k --retries -1"
     },
     
     "bookmarks": {
+        "multi": {
+            "browser": "Brave",
+            "folders": ["MultiDown"]
+        },
         "twitter": {
             "browser": "Brave",
             "folders": ["TwitterArt"]
@@ -49,6 +53,10 @@
         "3dhentai": {
             "browser": "Brave",
             "folders": ["3dHentai"]
+        },
+        "instagram": {
+            "bwoser": "Brave",
+            "folders": ["InstagramPostsToDownload"]
         }
     }
 }
