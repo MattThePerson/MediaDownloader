@@ -44,7 +44,8 @@
             "folders": []
         },
         "rule34": {
-            "": ""
+            "browser": "Brave",
+            "folders": ["Rule34Art"]
         },
         "pornhub": {
             "browser": "Brave",

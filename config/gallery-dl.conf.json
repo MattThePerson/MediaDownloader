@@ -120,42 +120,25 @@
                 "": "[{date}] {tag_string_artist} {tag_string_character} {tag_string_copyright} [{id}].{extension}"
             },
             "directory": ["danbooru", "{uploader[name]}"],
-
+            // ??
             "ugoira": true,
-            
             "postprocessors": ["json-metadata"]
-            // "postprocessors": [
-            //     {
-            //         "name" : "metadata",
-            //         "event": "post",
-            //         "filename": "{post_id|tweet_id|id}.txt",
-            //         "mode" : "custom",
-            //         "format": "score={score}\n tags_artist={tags_artist}\n tags_character={tags_character}\n tags_copyright={tags_copyright}\n tags_general={tags_general}\n"
-            //     }
-            // ]
         },
 
 
-        "rule34": {
+        "rule34":
+        {
             "filename": {
                 "":     "[{date}] {filename} [{id}].{extension}"
             },
-            "directory": ["rule34", "{uploader[name]}"],
-            "postprocessors": ["json-metadata"]
-            // "postprocessors": [
-            //     {
-            //         "name" : "metadata",
-            //         "event": "post",
-            //         "filename": "{post_id|tweet_id|id}.txt",
-            //         "mode" : "custom",
-            //         "format": "score={score}\n tags_string={tags}\n"
-            //     }
-            // ]
+            "directory": ["rule34", "{creator_id|'_UnknownArtist'}"],
+            "postprocessors": ["json-metadata", "rule34-postprocessor"]
         },
         
 
         
-        "bluesky": {
+        "bluesky":
+        {
             "postprocessors": ["json-metadata"],
             "filename": {
                 "":     "[{date}] {filename} [{post_id}].{extension}"
@@ -164,7 +147,8 @@
 
 
 
-        "instagram": {
+        "instagram":
+        {
             //"cookies": "cookies/instagram_cookies.txt",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
             "filename": {
@@ -175,7 +159,8 @@
         },
 
 
-        "pornhub": {
+        "pornhub":
+        {
             "postprocessors": ["json-metadata", "scrape-phub-metadata"],
             "filename": {
                 "": "[{date}] {title} [{viewkey}] [{id}].{extension}"
@@ -184,7 +169,8 @@
         },
         
         
-        "patreon": {
+        "patreon":
+        {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
             "postprocessors": ["json-metadata"],
             "filename": {
@@ -438,6 +424,13 @@
             "name": "exec",
             "command": ["venv/bin/python3", "scripts/phub-metadata-scraper.py", "{_path}", "{viewkey}"]
         },
+
+        // rule34 execs
+        "rule34-postprocessor": {
+            "name": "exec",
+            "command": ["venv/bin/python3", "scripts/rule34-postprocessor.py", "{_path}", "{id}"]
+        },
+
         "test-exec": {
             "name": "exec",
             "command": ["echo", "FUNNY HORSE HAHAHAHAAA"]
