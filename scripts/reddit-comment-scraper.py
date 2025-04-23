@@ -26,7 +26,7 @@ def get_comments_from_data(data):
     return comments
 
 # 
-def get_page_data(post_id, timeout=5, max_reps=3):
+def get_page_data(post_id, timeout=15, max_reps=3):
     if max_reps == 0:
         return None
     page_url = f"https://www.reddit.com/comments/{post_id}.json"
@@ -45,6 +45,8 @@ def get_page_data(post_id, timeout=5, max_reps=3):
 # 
 def get_comments_from_reddit_post(post_id):
     data = get_page_data(post_id)
+    if data == None:
+        return None
     comment_objects = get_comments_from_data(data)
     ignore_users = ['AutoModerator']
     comments = [ obj['body'] for obj in comment_objects if obj['author'] not in ignore_users ]
@@ -66,7 +68,7 @@ def main(media_path, post_id):
     metadata_filepath = os.path.join( metadata_dir, f'{post_id}-comments.json'  )
     comments = get_comments_from_reddit_post(post_id)
     if comments == None:
-        print('THAT DIDNT WORK')
+        print("Getting comments didnt work! :'(")
         return
     comments = [ c for c in comments if not is_unwanted_comment(c) ]
     data = {'comments': comments}

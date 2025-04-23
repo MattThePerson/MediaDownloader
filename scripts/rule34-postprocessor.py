@@ -128,5 +128,5 @@ def rule34_get_post_data(post_id):
 if __name__ == '__main__':
     path = sys.argv[1]
     post_id = sys.argv[2]
-    print('Running rule34 postprocessor ...')
+    # print('Running rule34 postprocessor ...')
     main(path, post_id)
