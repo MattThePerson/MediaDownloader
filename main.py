@@ -98,15 +98,17 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         return
     
     print('[URLS] Filtering {} urls ...'.format(len(urls_to_attempt)))
-    if args.filter:
-        urls_to_attempt = [ url for url in urls_to_attempt if args.filter.lower() in url.lower() ]
+    if args.filters:
+        filters = [ f.strip().lower() for f in args.filters.split(',') ]
+        for filter_ in filters:
+            urls_to_attempt = [ url for url in urls_to_attempt if filter_ in url.lower() ]
     
     if args.redo_failed:
         urls_to_attempt = [ url for url in urls_to_attempt if url in failed_urls ]
     elif not args.redo:
         urls_to_attempt = [ url for url in urls_to_attempt if url not in attempted_urls ]
     
-    if args.limit:  urls_to_attempt = urls_to_attempt[:args.limit]
+    if args.limit:      urls_to_attempt = urls_to_attempt[:args.limit]
     
     if urls_to_attempt == []:
         print('No urls got passed filtering')
@@ -172,14 +174,15 @@ def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]):
     
     print('Getting bookmarks from following sites:', sites)
     bmGetter = BookmarksGetter()
-    urls: list[Any] = []
+    # urls: list[Any] = []
+    bookmarks: list[dict[str, str]] = []
     for site in sites:
         site_settings = bm_settings.get(site)
         browser = bm_settings.get('browser', 'brave') # defaults to brave
         for folder in site_settings.get('folders', []):
-            bookmarks =  bmGetter.get_bookmarks(browser, folder)
-            urls.extend([ bm['url'] for bm in bookmarks ])
-    
+            bookmarks.extend( bmGetter.get_bookmarks(browser, folder) )
+    bookmarks.sort(key=lambda bm: bm['date_added'], reverse=(not args.reverse))
+    urls = [ bm['url'] for bm in bookmarks ]
     return urls
 
 
@@ -254,7 +257,8 @@ if __name__ == '__main__':
     
     # [STEP 2] URL FILTERING
     parser.add_argument('-limit', help='[STEP 2] Limit for how many urls to handle', type=int)
-    parser.add_argument('-filter', help='[STEP 2] Filter URLs by string')
+    parser.add_argument('-reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
+    parser.add_argument('-filters', help='[STEP 2] Filter URLs by string')
 
     # [STEP 3] DOWNLOAD OPTIONS
     parser.add_argument('-preset', help='Use preset arguments for gallery-dl')
