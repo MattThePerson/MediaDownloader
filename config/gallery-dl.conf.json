@@ -75,9 +75,14 @@
 
             "postprocessors": ["json-metadata", "scrape-reddit-comments"],
 
+            // title will be shortened to avoid OSError (uses "\fF " to work (f-string literal))
+            // NOTE: reddit-redgifs will fail initially, then fallback to reddit url
+            // https://github.com/mikf/gallery-dl/issues/2771#:~:text=%22%5CfF%20%7Bid%7D_%7Btitle.encode(%27utf%2D8%27)%5B%3A254%5D.decode(%27utf%2D8%27)%7D%5Cu2026.%7Bextension%7D
             "filename": {
-                "num > 0":      "[{date}] {title} (item-{num}) [{id}].{extension}",
-                "":             "[{date}] {title} [{id}].{extension}"
+                // "num > 0":      "[{date}] {title} (item-{num}) [{id}].{extension}",
+                // "":             "[{date}] {title} [{id}].{extension}"
+                "num > 0":      "\fF [{date}] {title.encode('utf-8')[:119].decode('utf-8')} (item-{num}) [{id}].{extension}",
+                "":             "\fF [{date}] {title.encode('utf-8')[:119].decode('utf-8')} [{id}].{extension}"
             },
             "directory": ["reddit", "{subreddit}"]
             // "abort": true
