@@ -15,12 +15,12 @@ from datetime import datetime
 from python.util import BookmarksGetter
 from python.util import JsonHandler
 
-from python.downloaders import gallerydl_downloader, _3dhentai_downloader, tiktok_downloader
+from python.downloaders import gallerydl_downloader, threedhentai_downloader, tiktok_downloader
 
 
 Downloaders = {
     'gallery-dl': gallerydl_downloader,
-    '3dhentai-dl': _3dhentai_downloader,
+    '3dhentai-dl': threedhentai_downloader,
     'tiktok-dl': tiktok_downloader,
 }
 

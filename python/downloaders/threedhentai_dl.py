@@ -1,12 +1,12 @@
 from typing import Any
 import argparse # for typing
 import os
-import urllib
+import urllib.request
 import requests
 from bs4 import BeautifulSoup as BS
 
 
-def _3dhentai_downloader(args: argparse.Namespace, url: str, dest: str, settings: dict[str, Any]) -> int:
+def threedhentai_downloader(args: argparse.Namespace, url: str, dest: str, settings: dict[str, Any]) -> int:
     """ Returns return code """
     data = get_info_3dhentai(url)
     if data:
@@ -55,7 +55,7 @@ def get_info_3dhentai(url):
     data['post_id'] = SL.split('?p=')[-1]
     
     # get title
-    title = soup.find('h1').get_text().strip()
+    title = soup.find('h1').get_text().strip() # type: ignore
     parts = title.split(' [')
     data['title'] = parts[0]
     if len(parts) > 1:
@@ -63,7 +63,7 @@ def get_info_3dhentai(url):
     
     # get artist
     try:
-        artist = soup.find(id='video-cats').find('a').get_text()
+        artist = soup.find(id='video-cats').find('a').get_text() # type: ignore
     except:
         artist = data['title_artist']
         print("No artist on page, parsing from title:", artist)
@@ -73,7 +73,7 @@ def get_info_3dhentai(url):
     characters_div = soup.find(id='video-actors')
     characters = []
     try:
-        for atag in characters_div.find_all('a'):
+        for atag in characters_div.find_all('a'): # type: ignore
             characters.append(atag.get_text())
     except:
         print("Unable to get characters")
@@ -83,7 +83,7 @@ def get_info_3dhentai(url):
 
     # date
     date_el = soup.find(id='video-date')
-    date_str = date_el.get_text().replace('Added on:', '')
+    date_str = date_el.get_text().replace('Added on:', '') # type: ignore
     date_fmt = format_date(date_str.strip(), delim='-')
     data['date_uploaded'] = date_fmt
     
@@ -91,7 +91,7 @@ def get_info_3dhentai(url):
     tags_el = soup.find(id='video-tags')
     tags = []
     try:
-        for atag in tags_el.find_all('a'):
+        for atag in tags_el.find_all('a'): # type: ignore
             tags.append(atag.get_text())
     except:
         print("Unable to get tags")
