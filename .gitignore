@@ -1,10 +1,17 @@
-.vscode/
-gallery-dl/
-venv/
+
+# folders
 __pycache__/
+.venv/
+venv/
+.vscode/
+.trash/
+gallery-dl/
 outfiles/
-logins.json
-data/*
-*.ipynb
 cookies/
+data/*
+_testing/
+
+# files
+logins.json
 test*
+*.ipynb

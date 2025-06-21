@@ -2,3 +2,4 @@ gallery-dl==1.28.3
 yt-dlp==2024.12.23
 beautifulsoup4==4.12.3
 markdown==3.7
+pydantic==1.10.22

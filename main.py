@@ -6,30 +6,37 @@ import re
 import time
 import subprocess
 import shlex
-from pathlib import Path
+# from pathlib import Path
 import os
 import argparse
 from typing import Any
 from datetime import datetime
-from util import BookmarksGetter
-from util import JsonHandler
 
-from downloaders import gallerydl_downloader, _3dhentai_downloader
+from python.util import BookmarksGetter
+from python.util import JsonHandler
+
+from python.downloaders import gallerydl_downloader, _3dhentai_downloader
+
+
+def tiktok_dl():
+    print('doing NISH!')
 
 Downloaders = {
     'gallery-dl': gallerydl_downloader,
-    '3dhentai-dl': _3dhentai_downloader
+    '3dhentai-dl': _3dhentai_downloader,
+    'tiktok-dl': tiktok_dl,
 }
 
 __SCRIPTDIR__ = os.path.dirname(os.path.abspath(__file__))
 __LOGFILE__ = os.path.join( __SCRIPTDIR__, 'data/activity.log' )
 
 
-#### MAIN ####
+#region - MAIN ---------------------------------------------------------------------------------------------------------
 
 def main(args: argparse.Namespace, settings: dict[str, Any]):
     
-    # [STEP 0] HANDLE NON DOWNLOAD OPTIONS
+    # [STEP 0] HANDLE NON DOWNLOAD OPTIONS -------------------------------------
+
     continue_flag = True
     if args.gallery:
         subprocess.run(['gallery-dl', '-h'])
@@ -70,7 +77,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         return
     
     
-    # [STEP 1] GET URLS
+    # [STEP 1] GET URLS --------------------------------------------------------
     
     attempted_urls, _, failed_urls = get_download_log()
     
@@ -103,6 +110,11 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         for filter_ in filters:
             urls_to_attempt = [ url for url in urls_to_attempt if filter_ in url.lower() ]
     
+    if args.ignore_filters:
+        ignore_filters = [ f.strip().lower() for f in args.ignore_filters.split(',') ]
+        for filter_ in ignore_filters:
+            urls_to_attempt = [ url for url in urls_to_attempt if filter_ not in url.lower() ]
+    
     if args.redo_failed:
         urls_to_attempt = [ url for url in urls_to_attempt if url in failed_urls ]
     elif not args.redo:
@@ -114,7 +126,8 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         print('No urls got passed filtering')
         return
 
-    # [STEP 2] DOWNLOAD
+
+    # [STEP 2] DOWNLOAD --------------------------------------------------------
     
     dest = settings.get('base-directory', '')
     if args.destination:
@@ -134,26 +147,27 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
                 break
         if downloader_func == None:
             print('ERROR: downloader_func is None')
+            return
+        if not (args.no_download and not args.down):
+            print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
+            start = time.time()
+            returncode = downloader_func(args, url, dest, settings) # DOWNLOADER
+            times.append(time.time() - start)
+            print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], returncode))
+            if returncode > 0:   fail.append(url)
+            else:                succ.append(url)
+            log_download(returncode, url, idx)
         else:
-            if not (args.no_download and not args.down):
-                print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
-                start = time.time()
-                returncode = downloader_func(args, url, dest, settings) # DOWNLOADER
-                times.append(time.time() - start)
-                print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], returncode))
-                if returncode > 0:   fail.append(url)
-                else:                succ.append(url)
-                log_download(returncode, url, idx)
-            else:
-                print('({}/{}) "{}"'.format(idx+1, len(urls_to_attempt), url))
-                if args.show_command:
-                    print("-command is DEPRECATED!!")
+            print('({}/{}) "{}"'.format(idx+1, len(urls_to_attempt), url))
+            if args.show_command:
+                print("-command is DEPRECATED!!")
     
     return
 
 
+#endregion
 
-# HELPER FUNCTIONS
+#region - HELPER FUNCS -------------------------------------------------------------------------------------------------
 
 # get_urls_from_bookmarks
 def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]):
@@ -238,8 +252,10 @@ def format_time_difference(diff):
     return f"{int(h):02}:" * (h > 0) + f"{int(m):02}:" + f"{s:02}.{ms:01}"
 
 
+#endregion
 
-# START
+#region - START --------------------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
     print()
     parser = argparse.ArgumentParser("Wrapper utility for gallery-dl")
@@ -258,7 +274,8 @@ if __name__ == '__main__':
     # [STEP 2] URL FILTERING
     parser.add_argument('-limit', help='[STEP 2] Limit for how many urls to handle', type=int)
     parser.add_argument('-reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
-    parser.add_argument('-filters', help='[STEP 2] Filter URLs by string')
+    parser.add_argument('-filters', help='[STEP 2] Filter URLs by strings (separate filters by comma ",")')
+    parser.add_argument('--ignore-filters', help='[STEP 2] Filter URLs by strings to ignore')
 
     # [STEP 3] DOWNLOAD OPTIONS
     parser.add_argument('-preset', help='Use preset arguments for gallery-dl')
@@ -327,3 +344,5 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('\n\n[INTERRUPT] Script interrupted by user')
     print()
+
+#endregion

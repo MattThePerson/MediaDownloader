@@ -46,7 +46,7 @@ def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], skip: b
                 Global.last_login = site
     
     options_str = ' '.join(options)
-    command = f'venv/bin/gallery-dl {options_str} "{url}"'
+    command = f'.venv/bin/gallery-dl {options_str} "{url}"'
     if extra_args:
         command += ' ' + ' '.join([ f'"{part}"' if ' ' in part else part for part in extra_args ])
     return command

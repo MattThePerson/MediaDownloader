@@ -4,6 +4,7 @@
     // define downloaders for different urls
     "downloaders": {
         "'3dhentai' in url.lower()": "3dhentai-dl",
+        "'tiktok.com' in url.lower()": "tiktok-dl",
         "": "gallery-dl"
     },
 
@@ -39,10 +40,6 @@
             "browser": "Brave",
             "folders": ["BlueskyArt"]
         },
-        "tiktok": {
-            "browser": "Brave",
-            "folders": []
-        },
         "rule34": {
             "browser": "Brave",
             "folders": ["Rule34Art"]
@@ -56,8 +53,12 @@
             "folders": ["3dHentai"]
         },
         "instagram": {
-            "bwoser": "Brave",
+            "browser": "Brave",
             "folders": ["InstagramPostsToDownload"]
+        },
+        "tiktok": {
+            "browser": "Brave",
+            "folders": ["TikTokPosts"]
         }
     }
 }
