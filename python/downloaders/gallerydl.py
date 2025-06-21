@@ -1,4 +1,5 @@
 from typing import Any
+import argparse # for typing
 import sys
 import subprocess
 import shlex
@@ -11,7 +12,7 @@ class Global:
 
 
 # Downloader
-def gallerydl_downloader(args, url, dest, settings):
+def gallerydl_downloader(args: argparse.Namespace, url: str, dest: str, settings: dict[str, Any]) -> int:
     command = get_gallerydl_command(url, dest, settings, skip=args.skip, extra_args=args.extra_args, presets=args.preset, config_file=args.gallerydl_config_file)
     result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=args.scriptdir)
     return result.returncode

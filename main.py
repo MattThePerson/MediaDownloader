@@ -15,16 +15,13 @@ from datetime import datetime
 from python.util import BookmarksGetter
 from python.util import JsonHandler
 
-from python.downloaders import gallerydl_downloader, _3dhentai_downloader
+from python.downloaders import gallerydl_downloader, _3dhentai_downloader, tiktok_downloader
 
-
-def tiktok_dl():
-    print('doing NISH!')
 
 Downloaders = {
     'gallery-dl': gallerydl_downloader,
     '3dhentai-dl': _3dhentai_downloader,
-    'tiktok-dl': tiktok_dl,
+    'tiktok-dl': tiktok_downloader,
 }
 
 __SCRIPTDIR__ = os.path.dirname(os.path.abspath(__file__))

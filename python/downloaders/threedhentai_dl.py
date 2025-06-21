@@ -1,10 +1,13 @@
+from typing import Any
+import argparse # for typing
 import os
 import urllib
 import requests
 from bs4 import BeautifulSoup as BS
 
 
-def _3dhentai_downloader(args, url, dest, settings):
+def _3dhentai_downloader(args: argparse.Namespace, url: str, dest: str, settings: dict[str, Any]) -> int:
+    """ Returns return code """
     data = get_info_3dhentai(url)
     if data:
         video_link = data.get('download_src')
