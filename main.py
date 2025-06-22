@@ -35,13 +35,13 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     # [STEP 0] HANDLE NON DOWNLOAD OPTIONS -------------------------------------
 
     continue_flag = True
-    if args.gallery:
+    if args.help_gallerydl:
         subprocess.run(['gallery-dl', '-h'])
         
-    elif args.settings:
+    elif args.print_settings:
         settings_fp = str(settings.get('settings_filepath'))
-        if isinstance(args.settings, str):
-            command = '{} "{}"'.format(args.settings, settings_fp)
+        if isinstance(args.print_settings, str):
+            command = '{} "{}"'.format(args.print_settings, settings_fp)
             print(command)
             subprocess.run(shlex.split(command))
         else:
@@ -52,7 +52,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
                         print(line)
             print('\nTo edit settings pass program name (eg. -settings nano)')
         
-    elif args.download_folder:
+    elif args.open_download_folder:
         df = settings.get('base-directory')
         if df:
             print('Opening download folder: "{}"\n'.format(df))
@@ -61,7 +61,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         else:
             print('Error: no base-directory')
     
-    elif args.logs:
+    elif args.print_logs:
         print('\n #### DOWNLOAD LOG ####\n')
         for line in open(__LOGFILE__, 'r'):
             if line != '\n':
@@ -79,6 +79,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     attempted_urls, _, failed_urls = get_download_log()
     
     urls_to_attempt: list[str] = []
+    url_bookmarks = {}
     if args.url:
         urls_to_attempt.append(args.url)
     
@@ -91,7 +92,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     
     elif args.bookmarks:
         print('[URLS] Retrieving urls from bookmarks ...')
-        urls_to_attempt = get_urls_from_bookmarks(args, settings)
+        urls_to_attempt, url_bookmarks = get_urls_from_bookmarks(args, settings)
         
     elif args.from_logs:
         print('[URLS] Using attempted URLs ...')
@@ -114,7 +115,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     
     if args.redo_failed:
         urls_to_attempt = [ url for url in urls_to_attempt if url in failed_urls ]
-    elif not args.redo:
+    elif not args.redo_logged:
         urls_to_attempt = [ url for url in urls_to_attempt if url not in attempted_urls ]
     
     if args.limit:      urls_to_attempt = urls_to_attempt[:args.limit]
@@ -136,6 +137,8 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     times = []
     downloader_options: dict = settings.get('downloaders', {})
     for idx, url in enumerate(urls_to_attempt):
+        
+        args.url_bookmark = url_bookmarks.get(url)
         
         downloader_func = None
         for exp, dl_name in downloader_options.items():
@@ -167,7 +170,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
 #region - HELPER FUNCS -------------------------------------------------------------------------------------------------
 
 # get_urls_from_bookmarks
-def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]):
+def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]) -> tuple[ list[str], dict[str, dict[str, str]] ]:
     
     bm_settings = settings.get('bookmarks')
     if bm_settings == None:
@@ -194,7 +197,8 @@ def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]):
             bookmarks.extend( bmGetter.get_bookmarks(browser, folder) )
     bookmarks.sort(key=lambda bm: bm['date_added'], reverse=(not args.reverse))
     urls = [ bm['url'] for bm in bookmarks ]
-    return urls
+    url_bookmarks = { bm['url']: bm for bm in bookmarks }
+    return urls, url_bookmarks
 
 
 ## MISC HELPERS ##
@@ -257,10 +261,10 @@ if __name__ == '__main__':
     print()
     parser = argparse.ArgumentParser("Wrapper utility for gallery-dl")
     
-    parser.add_argument('-gallery', action='store_true', help='Show -h screen for gallery-dl')
-    parser.add_argument('-settings', default=None, const=True, nargs="?", help='Print out settings (no args) or open in [nano, vim, code, ...]')
-    parser.add_argument('--download-folder', '-df', action='store_true', help='Opens the download folder')
-    parser.add_argument('-logs', action='store_true',help='Prints out logs')
+    parser.add_argument('--help-gallerydl', action='store_true', help='Show -h screen for gallery-dl')
+    parser.add_argument('--print-settings', default=None, const=True, nargs="?", help='Print out settings (no args) or open in [nano, vim, code, ...]')
+    parser.add_argument('--open-download-folder', '-df', action='store_true', help='Opens the download folder')
+    parser.add_argument('--print-logs', action='store_true',help='Prints out logs')
 
     # [STEP 1] URL GETTINGS
     parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
@@ -269,17 +273,19 @@ if __name__ == '__main__':
     parser.add_argument('--from-logs', '-fl', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
     # [STEP 2] URL FILTERING
-    parser.add_argument('-limit', help='[STEP 2] Limit for how many urls to handle', type=int)
+    parser.add_argument('--limit', '-l', help='[STEP 2] Limit for how many urls to handle', type=int)
+    parser.add_argument('--limit-playlist', '-lp', help='[STEP 2] Limit playlist downloads. Can be [START]:[END] or just [END]')
     parser.add_argument('-reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
-    parser.add_argument('-filters', help='[STEP 2] Filter URLs by strings (separate filters by comma ",")')
+    parser.add_argument('--filters', '-f', help='[STEP 2] Filter URLs by strings (separate filters by comma ",")')
     parser.add_argument('--ignore-filters', help='[STEP 2] Filter URLs by strings to ignore')
 
     # [STEP 3] DOWNLOAD OPTIONS
     parser.add_argument('-preset', help='Use preset arguments for gallery-dl')
     parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
-    parser.add_argument('-redo', action='store_true', help='[STEP 3] Retries urls even if previously attempted (according to activity.log)')
-    parser.add_argument('-redo-failed', action='store_true', help='[STEP 3] Retries only urls found to have previously failed (according to activity.log)')
-    parser.add_argument('-skip', action='store_true', help='[STEP 3] Skip links already downloaded or attempted (stored in archive.sqlite3)')
+    parser.add_argument('--redo-failed', action='store_true', help='[STEP 3] Retries urls that have been logged as fail (according to activity.log)')
+    parser.add_argument('--redo-logged', action='store_true', help='[STEP 3] Retries urls that have been logged by mdown (activity.log)')
+    parser.add_argument('--redo-archived', action='store_true', help='[STEP 3] Retries urls that have been archived by downloaders (gallery-dl, yt-dlp)')
+    parser.add_argument('--skip-archived', action='store_true', help='[STEP 3] Skip links already downloaded or attempted (stored in archive.sqlite3)')
 
     parser.add_argument('--no-download', '-nd', action='store_true', help='Dont download, only list urls')
     parser.add_argument('-down', action='store_true', help='Counteracts --no-download')
