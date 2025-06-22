@@ -13,10 +13,11 @@
 - yt-dlp
 
 
-### Installing and Running
+### Installing
 
-- To install, execute `setup.sh` (chmod first)
-- To run, execute `run.sh` (Add symlink to folder on path for convenience)
+- (Optional) Edit tool name and symlink dir in `tools/install.sh`
+- Ensure `tools/install.sh` has execute perms (chmod +x)
+- Run `tools/install.sh`
 
 
 ### Gallery-DL
