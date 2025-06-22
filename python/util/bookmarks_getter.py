@@ -81,4 +81,5 @@ class BookmarksGetter:
             return location
         if location == foldername:
             return ''
-        return location.replace(f'{foldername}/', '')
+        return location.split(f'{foldername}/')[-1]
+        # return location.replace(f'{foldername}/', '')
