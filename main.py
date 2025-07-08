@@ -275,12 +275,12 @@ if __name__ == '__main__':
     # [STEP 2] URL FILTERING
     parser.add_argument('--limit', '-l', help='[STEP 2] Limit for how many urls to handle', type=int)
     parser.add_argument('--limit-playlist', '-lp', help='[STEP 2] Limit playlist downloads. Can be [START]:[END] or just [END]')
-    parser.add_argument('-reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
+    parser.add_argument('--reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
     parser.add_argument('--filters', '-f', help='[STEP 2] Filter URLs by strings (separate filters by comma ",")')
     parser.add_argument('--ignore-filters', help='[STEP 2] Filter URLs by strings to ignore')
 
     # [STEP 3] DOWNLOAD OPTIONS
-    parser.add_argument('-preset', help='Use preset arguments for gallery-dl')
+    parser.add_argument('--preset', help='Use preset arguments for gallery-dl')
     parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
     parser.add_argument('--redo-failed', action='store_true', help='[STEP 3] Retries urls that have been logged as fail (according to activity.log)')
     parser.add_argument('--redo-logged', action='store_true', help='[STEP 3] Retries urls that have been logged by mdown (activity.log)')
@@ -289,7 +289,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--no-download', '-nd', action='store_true', help='Dont download, only list urls')
     parser.add_argument('-down', action='store_true', help='Counteracts --no-download')
-    parser.add_argument('-show-command', action='store_true', help='Shows download command') # DEPRECATED !!
+    parser.add_argument('--show-command', action='store_true', help='Shows download command') # DEPRECATED !!
     
     parser.add_argument('-test', '--use-test-urls', action='store_true', help='Test downloading') # NOT IN USE
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Capture undefined arguments to pass to a shell script")
@@ -330,9 +330,10 @@ if __name__ == '__main__':
     
     # gallery-dl presets
     if args.preset:
-        preset_args = settings.get('presets', {}).get(args.preset)
-        if preset_args == None:
-            print('Preset called "{}" doesnt exist in settings.json'.format(args.preset))
+        download_presets = settings.get('presets', {})
+        preset_args = download_presets.get(args.preset)
+        if preset_args is None:
+            print('Preset called "{}" doesnt exist in settings.json. Select from following: {}'.format(args.preset, list(download_presets.keys())))
             exit(1)
         else:
             print('Using gallery-dl presets: "{}"'.format(preset_args))
