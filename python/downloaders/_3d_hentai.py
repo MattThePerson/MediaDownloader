@@ -3,6 +3,7 @@ import argparse # for typing
 import os
 import urllib.request
 import requests
+import json
 from bs4 import BeautifulSoup as BS
 
 
@@ -16,9 +17,9 @@ def threedhentai_downloader(args: argparse.Namespace, url: str, dest: str, setti
         dirname, filename = get_savepath_3dhentai(data)
         dirpath = os.path.join(*[dest, '3dHentai', dirname])
         savepath = os.path.join(dirpath, filename)
-        metadata_filepath = os.path.join(dirpath, '{}.txt'.format(data.get('post_id')))
+        metadata_filepath = os.path.join(dirpath, '.metadata', '{}.json'.format(data.get('post_id')))
         print(f'Downloading from: "{video_link}"')
-        print(savepath)
+        print(f"Saving to: {savepath}")
         os.makedirs(dirpath, exist_ok=True)
         save_metadata(metadata_filepath, data)
         ret = download_video(video_link, savepath)
@@ -106,7 +107,9 @@ def get_info_3dhentai(url):
 
 #### HELPERS ####
 
-def download_video(video_link, savepath):
+def download_video(video_link, savepath, redo=False):
+    if not redo and os.path.exists(savepath):
+        return True
     urllib.request.urlretrieve(video_link, savepath)
     if not os.path.exists(savepath):
         return False
@@ -114,7 +117,7 @@ def download_video(video_link, savepath):
 
 def get_savepath_3dhentai(data) -> tuple[str, str]:
     d = data.get('artist')
-    fn = '[{}] {} [{}].mp4'.format( data.get('date_uploaded'), data.get('title'), data.get('post_id') )
+    fn = '[{}] {} {{{}}}.mp4'.format( data.get('date_uploaded'), data.get('title'), data.get('post_id') )
     return d, fn
 
 def format_date(date, delim='.'):
@@ -143,8 +146,10 @@ def split_char_and_ip(characters):
             ips.append(parts[1].split(')')[0])
     return list(set(chars)), list(set(ips))
 
-def save_metadata(fp, data):
+def save_metadata(fp: str, data_full: dict):
+    os.makedirs(os.path.dirname(fp), exist_ok=True)
+    keys = ["title", "url", "download_src", "artist", "date_uploaded", "characters", "sources", "tags"]
+    data = { k: data_full.get(k) for k in keys }
     with open(fp, 'w') as f:
-        for key in ["title", "url", "download_src", "artist", "characters", "sources", "tags"]:
-            value = str(data.get(key))
-            f.write(f'{key}={value}\n')
+        json.dump(data, f, indent=4)
+    
