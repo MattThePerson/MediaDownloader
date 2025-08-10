@@ -43,7 +43,9 @@ def tiktok_downloader(args: argparse.Namespace, url: str, dest: str, settings: d
         title = sanitize_filename(metadata['title'])
         title_max_len = 120
         title = title if (len(title) <= title_max_len) else title[:title_max_len-3] + '...'
-        upload_datetime = format_unix_time(metadata['epoch'])
+        # upload_datetime = format_unix_time(metadata['epoch'])
+        dt = metadata["upload_date"]
+        upload_datetime = "{}-{}-{}".format(dt[:4], dt[4:6], dt[6:])
         tiktok_id = metadata['id']
 
         bm = args.url_bookmark
