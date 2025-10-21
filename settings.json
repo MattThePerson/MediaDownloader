@@ -12,7 +12,8 @@
     "presets": {
         "slower":           "--sleep 1 --limit-rate 500k",
         "instagram":        "--sleep 3 --sleep-extractor 3 --limit-rate 200k",
-        "instagram-nostop": "--sleep 7 --sleep-extractor 5 --limit-rate 200k --retries -1"
+        "instagram-nostop": "--sleep 7 --sleep-extractor 5 --limit-rate 200k --retries -1",
+        "subreddits":       "--sleep 7 --sleep-extractor 3 --limit-rate 250k"
     },
     
     "bookmarks": {
@@ -59,6 +60,10 @@
         "tiktok": {
             "browser": "Brave",
             "folders": ["TikTokPosts"]
+        },
+        "pinterest": {
+            "browser": "Brave",
+            "folders": ["PinterestSexy"]
         }
     }
 }

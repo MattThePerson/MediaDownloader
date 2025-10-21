@@ -33,8 +33,11 @@ def main(path, post_id):
         json.dump(metadata, f, indent=4)
     
     # move files to uploader folder and delete old folder
-    if uploader == None:
+    if uploader is None:
         raise Exception('ERROR: Uploader is None, cannot rename folder')
+    
+    if uploader.endswith("."):
+        uploader = uploader[:-1]
     
     oldparent = str(obj)
     newparent = os.path.join( obj.parent, uploader )
@@ -108,14 +111,16 @@ def rule34_get_post_data(post_id):
         "Connection": "keep-alive",
     }
     res = None
-    max_attempts = 5
+    max_attempts = 10
+    sleep_time = 20
     for att in range(max_attempts):
         res = requests.get(url, headers=headers)
         if res.status_code == 200:
             break
         else:
-            print('[{}] Got status_code: {}, sleeping ...'.format(att+1, res.status_code))
-            time.sleep(1)
+            print('(sleep count: {}) Got status_code: {}, sleeping for {} seconds ...'.format(att+1, res.status_code, sleep_time))
+            time.sleep(sleep_time)
+            sleep_time += 5
     
     if res == None:
         raise Exception('Unable to scrape data from "{}" after {} attempts'.format(post_id, max_attempts))

@@ -4,6 +4,7 @@ TODO:
 """
 import re
 import time
+import random
 import subprocess
 import shlex
 # from pathlib import Path
@@ -124,6 +125,16 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         print('No urls got passed filtering')
         return
 
+    if args.randomize:
+        print('randomizing urls')
+        if args.seed:
+            print('using seed:', args.seed)
+            random.seed(args.seed)
+        random.shuffle(urls_to_attempt)
+
+    if args.reverse:
+        print('reversing URLs')
+        urls_to_attempt = urls_to_attempt[::-1]
 
     # [STEP 2] DOWNLOAD --------------------------------------------------------
     
@@ -195,7 +206,7 @@ def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]) 
         browser = bm_settings.get('browser', 'brave') # defaults to brave
         for folder in site_settings.get('folders', []):
             bookmarks.extend( bmGetter.get_bookmarks(browser, folder) )
-    bookmarks.sort(key=lambda bm: bm['date_added'], reverse=(not args.reverse))
+    bookmarks.sort(key=lambda bm: bm['date_added'])
     urls = [ bm['url'] for bm in bookmarks ]
     url_bookmarks = { bm['url']: bm for bm in bookmarks }
     return urls, url_bookmarks
@@ -278,6 +289,8 @@ if __name__ == '__main__':
     parser.add_argument('--reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
     parser.add_argument('--filters', '-f', help='[STEP 2] Filter URLs by strings (separate filters by comma ",")')
     parser.add_argument('--ignore-filters', help='[STEP 2] Filter URLs by strings to ignore')
+    parser.add_argument('--randomize', action='store_true', help='[STEP 2] Randomize URLs')
+    parser.add_argument('--seed', help='[STEP 2] Seed to use while randomizing', type=int)
 
     # [STEP 3] DOWNLOAD OPTIONS
     parser.add_argument('--preset', help='Use preset arguments for gallery-dl')
