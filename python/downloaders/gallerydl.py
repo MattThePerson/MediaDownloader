@@ -25,7 +25,7 @@ def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], skip_ar
 
     options = [
         f'--destination "{dest}"',
-        f'--cookies cookies/cookies.txt'
+        f'--cookies cookies/cookies.txt',
     ]
     if config_file:
         options.append(f'--config {config_file}')

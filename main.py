@@ -119,12 +119,6 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     elif not args.redo_logged:
         urls_to_attempt = [ url for url in urls_to_attempt if url not in attempted_urls ]
     
-    if args.limit:      urls_to_attempt = urls_to_attempt[:args.limit]
-    
-    if urls_to_attempt == []:
-        print('No urls got passed filtering')
-        return
-
     if args.randomize:
         print('randomizing urls')
         if args.seed:
@@ -135,6 +129,12 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     if args.reverse:
         print('reversing URLs')
         urls_to_attempt = urls_to_attempt[::-1]
+
+    if args.limit:      urls_to_attempt = urls_to_attempt[:args.limit]
+    
+    if urls_to_attempt == []:
+        print('No urls got passed filtering')
+        return
 
     # [STEP 2] DOWNLOAD --------------------------------------------------------
     

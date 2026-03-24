@@ -13,7 +13,7 @@ class BookmarksGetter:
 
     default_bookmarks_paths = [
         r'%localappdata%/Google/Chrome/User Data/Default/Bookmarks',
-        r'%localappdata%/BraveSoftware/Brave-Browser/User Data/Default/Bookmarks',
+        r'%localappdata%/BraveSoftware/Brave-Browser/User Data/Profile 6/Bookmarks',
     ]
 
     @classmethod

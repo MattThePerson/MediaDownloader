@@ -64,6 +64,10 @@
         "pinterest": {
             "browser": "Brave",
             "folders": ["PinterestSexy"]
+        },
+        "tumblr": {
+            "browser": "Brave",
+            "folders": ["TumblrNaughty"]
         }
     }
 }

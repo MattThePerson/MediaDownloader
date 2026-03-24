@@ -197,6 +197,37 @@
             "directory": ["pinterest", "{board['name']} by {board['owner']['username']}"]
         },
         
+        "kemono": 
+        {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "postprocessors": ["json-metadata"],
+            "filename": {
+                "": "[{date}] {title} [{id}] (item-{num}).{extension}"
+            },
+            "directory": ["kemono", "{username} ({subcategory}) [{user}]"]
+        },
+
+        "coomer": 
+        {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "postprocessors": ["json-metadata"],
+            "filename": {
+                "": "[{date}] {title} [{id}] (item-{num}).{extension}"
+            },
+            "directory": ["coomer", "{username} ({subcategory}) [{user}]"]
+        },
+
+        "tumblr":
+        {
+            "postprocessors": ["json-metadata"],
+            "text-tweets": false,
+            "filename": {
+                "count > 1":    "[{date}] {filename} (item-{num}) [{id}].{extension}",
+                "":             "[{date}] {filename} [{id}].{extension}"
+            }
+        },
+
+
         // ===============================================================
         // OTHER
         // ===============================================================
@@ -404,6 +435,7 @@
 
         "content":
         {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
             "name" : "metadata",
              // write data for every post instead of each individual file
             "event": "post",
@@ -415,6 +447,7 @@
 
         "content-reddit":
         {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
             "name" : "metadata",
             "event": "post",
             "filename": "{post_id|tweet_id|id}.txt",
