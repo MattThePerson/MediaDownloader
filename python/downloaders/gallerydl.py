@@ -13,12 +13,12 @@ class Global:
 
 # Downloader
 def gallerydl_downloader(args: argparse.Namespace, url: str, dest: str, settings: dict[str, Any]) -> int:
-    command = get_gallerydl_command(url, dest, settings, redo_archived=args.redo_archived, skip_archived=args.skip_archived, extra_args=args.extra_args, presets=args.preset, config_file=args.gallerydl_config_file, playlist_range=args.limit_playlist)
+    command = get_gallerydl_command(url, dest, settings, redo_archived=args.redo_archived, extra_args=args.extra_args, presets=args.preset, config_file=args.gallerydl_config_file, playlist_range=args.limit_playlist)
     result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=args.scriptdir)
     return result.returncode
 
 
-def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], skip_archived: bool=False, redo_archived: bool=False,
+def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], redo_archived: bool=False,
                             presets: str|None = None, config_file: str|None = None, playlist_range: str|None = None, extra_args: str|None = None, ):
 
     logins = settings.get('logins', {})

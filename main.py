@@ -84,7 +84,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     if args.url:
         urls_to_attempt.append(args.url)
     
-    elif args.read_file: # -i, --input-file FILE       Download URLs found in FILE ('-' for stdin).
+    elif args.read_from_file: # -i, --input-file FILE       Download URLs found in FILE ('-' for stdin).
         print('[URLS] Feature not implemented')
         print(args.read_file)
         with open(args.read_file, 'r') as f:
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     # [STEP 1] URL GETTINGS
     parser.add_argument('--url', '-u', help='[STEP 1] Pass url to download')
     parser.add_argument('--bookmarks', '-b', default=None, const=True, nargs="?", help='[STEP 1] Get urls from bookmarks')
-    parser.add_argument('--read-file', '-r', help='[STEP 1] Pass file to read urls from')
+    parser.add_argument('--read-from-file', '-file', help='[STEP 1] Pass file to read urls from')
     parser.add_argument('--from-logs', '-fl', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
     # [STEP 2] URL FILTERING
@@ -296,9 +296,9 @@ if __name__ == '__main__':
     parser.add_argument('--preset', help='Use preset arguments for gallery-dl')
     parser.add_argument('--destination', '-d', help='Pass destination to download (default defined in settings.json)')
     parser.add_argument('--redo-failed', action='store_true', help='[STEP 3] Retries urls that have been logged as fail (according to activity.log)')
-    parser.add_argument('--redo-logged', action='store_true', help='[STEP 3] Retries urls that have been logged by mdown (activity.log)')
-    parser.add_argument('--redo-archived', action='store_true', help='[STEP 3] Retries urls that have been archived by downloaders (gallery-dl, yt-dlp)')
-    parser.add_argument('--skip-archived', action='store_true', help='[STEP 3] Skip links already downloaded or attempted (stored in archive.sqlite3)')
+    parser.add_argument('--redo-logged', '-rl', action='store_true', help='[STEP 3] Retries urls that have been logged by mdown (activity.log)')
+    parser.add_argument('--redo-archived', '-ra', action='store_true', help='[STEP 3] Retries urls that have been archived by downloaders (gallery-dl, yt-dlp)')
+    parser.add_argument('--redo-all', '-redo', action='store_true', help='[STEP 3] combines --redo-logged and --redo-archived')
 
     parser.add_argument('--no-download', '-nd', action='store_true', help='Dont download, only list urls')
     parser.add_argument('-down', action='store_true', help='Counteracts --no-download')
@@ -312,6 +312,11 @@ if __name__ == '__main__':
     if args.extra_args:
         args.extra_args = args.extra_args[1:]
     args.scriptdir = __SCRIPTDIR__
+
+    # 
+    if args.redo_all:
+        args.redo_archived = True
+        args.redo_logged = True
 
     # process gallerydl config file (remove comments)
     gdl_config = 'config/gallery-dl.conf'
