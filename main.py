@@ -130,6 +130,7 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         print('reversing URLs')
         urls_to_attempt = urls_to_attempt[::-1]
 
+    if args.start_from: urls_to_attempt = urls_to_attempt[args.start_from:]
     if args.limit:      urls_to_attempt = urls_to_attempt[:args.limit]
     
     if urls_to_attempt == []:
@@ -284,13 +285,14 @@ if __name__ == '__main__':
     parser.add_argument('--from-logs', '-fl', action='store_true', help='[STEP 1] Retrievs list of urls from activity.log')
     
     # [STEP 2] URL FILTERING
-    parser.add_argument('--limit', '-l', help='[STEP 2] Limit for how many urls to handle', type=int)
+    parser.add_argument('--limit', '-l', type=int, help='[STEP 2] Limit for how many urls to handle')
+    parser.add_argument('--start-from', type=int, help='[STEP 2] Which url to start from (number)')
     parser.add_argument('--limit-playlist', '-lp', help='[STEP 2] Limit playlist downloads. Can be [START]:[END] or just [END]')
     parser.add_argument('--reverse', action='store_true', help='[STEP 2] Reverse order or urls') # NOTE: reverses in get bookmarks function
     parser.add_argument('--filters', '-f', help='[STEP 2] Filter URLs by strings (separate filters by comma ",")')
     parser.add_argument('--ignore-filters', help='[STEP 2] Filter URLs by strings to ignore')
     parser.add_argument('--randomize', action='store_true', help='[STEP 2] Randomize URLs')
-    parser.add_argument('--seed', help='[STEP 2] Seed to use while randomizing', type=int)
+    parser.add_argument('--seed', type=int, help='[STEP 2] Seed to use while randomizing')
 
     # [STEP 3] DOWNLOAD OPTIONS
     parser.add_argument('--preset', help='Use preset arguments for gallery-dl')

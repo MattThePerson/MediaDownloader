@@ -112,7 +112,7 @@ def rule34_get_post_data(post_id):
     }
     res = None
     max_attempts = 10
-    sleep_time = 20
+    sleep_time = 10
     for att in range(max_attempts):
         res = requests.get(url, headers=headers)
         if res.status_code == 200:
@@ -120,7 +120,7 @@ def rule34_get_post_data(post_id):
         else:
             print('(sleep count: {}) Got status_code: {}, sleeping for {} seconds ...'.format(att+1, res.status_code, sleep_time))
             time.sleep(sleep_time)
-            sleep_time += 5
+            sleep_time *= 2
     
     if res == None:
         raise Exception('Unable to scrape data from "{}" after {} attempts'.format(post_id, max_attempts))
