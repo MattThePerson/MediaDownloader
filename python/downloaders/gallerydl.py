@@ -1,32 +1,39 @@
 from typing import Any
-import argparse # for typing
+import argparse
 import sys
 import subprocess
 import shlex
 from dataclasses import dataclass
 
-
 @dataclass
 class Global:
     last_login: str = ''
 
-
-# Downloader
+# gallerydl_downloader
 def gallerydl_downloader(args: argparse.Namespace, url: str, dest: str, settings: dict[str, Any]) -> int:
-    command = get_gallerydl_command(url, dest, settings, redo_archived=args.redo_archived, extra_args=args.extra_args, presets=args.preset, config_file=args.gallerydl_config_file, playlist_range=args.limit_playlist)
+    """  """
+    command = get_gallerydl_command(url, dest, settings, redo_archived=args.redo_archived,
+                                    extra_args=args.extra_args,presets=args.preset,
+                                    config_file=args.gallerydl_config_file, playlist_range=args.limit_playlist,
+                                    no_cookies=args.no_cookies, )
     result = subprocess.run(shlex.split(command), stdout=sys.stdout, stderr=sys.stderr, cwd=args.scriptdir)
     return result.returncode
 
-
+# get_gallerydl_command
 def get_gallerydl_command(url: str, dest: str, settings: dict[str, Any], redo_archived: bool=False,
-                            presets: str|None = None, config_file: str|None = None, playlist_range: str|None = None, extra_args: str|None = None, ):
+                          presets: str|None = None, config_file: str|None = None,
+                          playlist_range: str|None = None, extra_args: str|None = None,
+                          no_cookies: bool=False, ):
+    """  """
 
     logins = settings.get('logins', {})
 
     options = [
         f'--destination "{dest}"',
-        f'--cookies cookies/cookies.txt',
+        # '--cookies cookies/cookies.txt',
     ]
+    if not no_cookies:
+        options.append('--cookies cookies/cookies.txt')
     if config_file:
         options.append(f'--config {config_file}')
         
@@ -73,7 +80,3 @@ def get_url_site(url):
     if len(dot_parts) < 2:
         return None
     return dot_parts[1]
-
-
-
-

@@ -1,13 +1,8 @@
-""" 
-TODO:
-- Make argument "-d ." for downloading in different directory work
-"""
 import re
 import time
 import random
 import subprocess
 import shlex
-# from pathlib import Path
 import os
 import argparse
 from typing import Any
@@ -18,7 +13,6 @@ from python.util import JsonHandler
 
 from python.downloaders import gallerydl_downloader, threedhentai_downloader, tiktok_downloader
 
-
 Downloaders = {
     'gallery-dl': gallerydl_downloader,
     '3dhentai-dl': threedhentai_downloader,
@@ -28,12 +22,99 @@ Downloaders = {
 __SCRIPTDIR__ = os.path.dirname(os.path.abspath(__file__))
 __LOGFILE__ = os.path.join( __SCRIPTDIR__, 'data/activity.log' )
 
+# ======================================================================================================================
+# region Helpers
+# ======================================================================================================================
 
-#region - MAIN ---------------------------------------------------------------------------------------------------------
+def log_download(code, url, idx):
+    global __LOGFILE__
+    dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    folder = os.path.dirname(__LOGFILE__)
+    if folder and not os.path.exists(folder):
+        os.makedirs(folder)
+    succ_str = 'CODE {:>2}{:<5}'.format(code, ' FAIL' if code > 0 else '')
+    line_to_write = f'{dt} : {idx:<5} : {succ_str} : "{url}"'
+    with open(__LOGFILE__, "a") as file:
+        # if idx == 0:
+        #     file.write('\n')
+        file.write(line_to_write + "\n")
+
+def get_download_log():
+    all, only_succ, only_fail = [], [], []
+    with open(__LOGFILE__, 'r') as f:
+        for line in f:
+            parts = [ p.strip() for p in line.replace('\n', '').split(' : ') ]
+            url = parts[-1].replace('"', '')
+            if url.startswith('https://'):
+                failed = 'FAIL' in parts[-2]
+                all.append(url)
+                if not failed:
+                    only_succ.append(url)
+                else:
+                    only_fail.append(url)
+    return list(set(all)), list(set(only_succ)), list(set(only_fail))
+
+def open_in_explorer(wsl_path):
+    result = subprocess.run(["wslpath", "-w", wsl_path], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise ValueError(f"Failed to convert path: {result.stderr.strip()}")
+    windows_path = result.stdout.strip()
+    subprocess.run(["explorer.exe", windows_path])
+
+def print_url_download_info(idx, count, url, succN, failN, times):
+    dt = datetime.now().strftime('%H:%M:%S')
+    total_tt = format_time_difference(sum(times))
+    average_tt = format_time_difference(sum(times) / len(times) if times != [] else 0)
+    print(f'  [{dt}]  ({idx+1}/{count})  succ={succN}  fail={failN}  average_tt={average_tt}  total_tt={total_tt}')
+    print(f'URL: "{url}"')
+
+def format_time_difference(diff):
+    h, rem = divmod(diff, 3600)
+    m, s = divmod(rem, 60)
+    ms = int((s % 1) * 1000)
+    s = int(s)
+    return f"{int(h):02}:" * (h > 0) + f"{int(m):02}:" + f"{s:02}.{ms:01}"
+
+# get_urls_from_bookmarks
+def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]) -> tuple[ list[str], dict[str, dict[str, str]] ]:
+    
+    bm_settings = settings.get('bookmarks')
+    if bm_settings is None:
+        print('[FAIL] No bookmarks settings in "settings.json"')
+        exit(1)
+    
+    all_sites = [ site.lower() for site in bm_settings.keys() ]
+    if args.bookmarks == True:
+        sites = all_sites
+    else:
+        if args.bookmarks.lower() not in all_sites:
+            print('[ERROR] No settings for site: "{}"'.format(args.bookmarks))
+            exit(1)
+        sites = [args.bookmarks]
+    
+    print('Getting bookmarks from following sites:', sites)
+    bmGetter = BookmarksGetter()
+    # urls: list[Any] = []
+    bookmarks: list[dict[str, str]] = []
+    for site in sites:
+        site_settings = bm_settings.get(site)
+        browser = bm_settings.get('browser', 'brave') # defaults to brave
+        for folder in site_settings.get('folders', []):
+            bookmarks.extend( bmGetter.get_bookmarks(browser, folder) )
+    bookmarks.sort(key=lambda bm: bm['date_added'])
+    urls = [ bm['url'] for bm in bookmarks ]
+    url_bookmarks = { bm['url']: bm for bm in bookmarks }
+    return urls, url_bookmarks
+
+# ======================================================================================================================
+# region Main
+# ======================================================================================================================
 
 def main(args: argparse.Namespace, settings: dict[str, Any]):
     
-    # [STEP 0] HANDLE NON DOWNLOAD OPTIONS -------------------------------------
+    # -------------------------------------------------------------------------
+    # STEP 0: Handle non-download options
+    # -------------------------------------------------------------------------
 
     continue_flag = True
     if args.help_gallerydl:
@@ -74,8 +155,9 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     if continue_flag:
         return
     
-    
-    # [STEP 1] GET URLS --------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # STEP 1: Get URLs
+    # -------------------------------------------------------------------------
     
     attempted_urls, _, failed_urls = get_download_log()
     
@@ -137,7 +219,9 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
         print('No urls got passed filtering')
         return
 
-    # [STEP 2] DOWNLOAD --------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # STEP 2: Download
+    # -------------------------------------------------------------------------
     
     dest = settings.get('base-directory', '')
     if args.destination:
@@ -157,13 +241,18 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
             if exp == '' or eval(exp):
                 downloader_func = Downloaders.get(dl_name)
                 break
-        if downloader_func == None:
+        if downloader_func is None:
             print('ERROR: downloader_func is None')
             return
         if not (args.no_download and not args.down):
             print_url_download_info(idx, len(urls_to_attempt), url, len(succ), len(fail), times)
             start = time.time()
-            returncode = downloader_func(args, url, dest, settings) # DOWNLOADER
+            returncode = downloader_func(
+                args,
+                url,
+                dest,
+                settings,
+            )
             times.append(time.time() - start)
             print('Done. Took {:.1f}s. Returncode: {}'.format(times[-1], returncode))
             if returncode > 0:   fail.append(url)
@@ -176,98 +265,9 @@ def main(args: argparse.Namespace, settings: dict[str, Any]):
     
     return
 
-
-#endregion
-
-#region - HELPER FUNCS -------------------------------------------------------------------------------------------------
-
-# get_urls_from_bookmarks
-def get_urls_from_bookmarks(args: argparse.Namespace, settings: dict[str, Any]) -> tuple[ list[str], dict[str, dict[str, str]] ]:
-    
-    bm_settings = settings.get('bookmarks')
-    if bm_settings == None:
-        print('[FAIL] No bookmarks settings in "settings.json"')
-        exit(1)
-    
-    all_sites = [ site.lower() for site in bm_settings.keys() ]
-    if args.bookmarks == True:
-        sites = all_sites
-    else:
-        if args.bookmarks.lower() not in all_sites:
-            print('[ERROR] No settings for site: "{}"'.format(args.bookmarks))
-            exit(1)
-        sites = [args.bookmarks]
-    
-    print('Getting bookmarks from following sites:', sites)
-    bmGetter = BookmarksGetter()
-    # urls: list[Any] = []
-    bookmarks: list[dict[str, str]] = []
-    for site in sites:
-        site_settings = bm_settings.get(site)
-        browser = bm_settings.get('browser', 'brave') # defaults to brave
-        for folder in site_settings.get('folders', []):
-            bookmarks.extend( bmGetter.get_bookmarks(browser, folder) )
-    bookmarks.sort(key=lambda bm: bm['date_added'])
-    urls = [ bm['url'] for bm in bookmarks ]
-    url_bookmarks = { bm['url']: bm for bm in bookmarks }
-    return urls, url_bookmarks
-
-
-## MISC HELPERS ##
-
-def log_download(code, url, idx):
-    global __LOGFILE__
-    dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    folder = os.path.dirname(__LOGFILE__)
-    if folder and not os.path.exists(folder):
-        os.makedirs(folder)
-    succ_str = 'CODE {:>2}{:<5}'.format(code, ' FAIL' if code > 0 else '')
-    line_to_write = f'{dt} : {idx:<5} : {succ_str} : "{url}"'
-    with open(__LOGFILE__, "a") as file:
-        # if idx == 0:
-        #     file.write('\n')
-        file.write(line_to_write + "\n")
-
-def get_download_log():
-    all, only_succ, only_fail = [], [], []
-    with open(__LOGFILE__, 'r') as f:
-        for line in f:
-            parts = [ p.strip() for p in line.replace('\n', '').split(' : ') ]
-            url = parts[-1].replace('"', '')
-            if url.startswith('https://'):
-                failed = 'FAIL' in parts[-2]
-                all.append(url)
-                if not failed:
-                    only_succ.append(url)
-                else:
-                    only_fail.append(url)
-    return list(set(all)), list(set(only_succ)), list(set(only_fail))
-
-def open_in_explorer(wsl_path):
-    result = subprocess.run(["wslpath", "-w", wsl_path], capture_output=True, text=True)
-    if result.returncode != 0:
-        raise ValueError(f"Failed to convert path: {result.stderr.strip()}")
-    windows_path = result.stdout.strip()
-    subprocess.run(["explorer.exe", windows_path])
-
-def print_url_download_info(idx, count, url, succN, failN, times):
-    dt = datetime.now().strftime('%H:%M:%S')
-    total_tt = format_time_difference(sum(times))
-    average_tt = format_time_difference(sum(times) / len(times) if times != [] else 0)
-    print(f'  [{dt}]  ({idx+1}/{count})  succ={succN}  fail={failN}  average_tt={average_tt}  total_tt={total_tt}')
-    print(f'URL: "{url}"')
-
-def format_time_difference(diff):
-    h, rem = divmod(diff, 3600)
-    m, s = divmod(rem, 60)
-    ms = int((s % 1) * 1000)
-    s = int(s)
-    return f"{int(h):02}:" * (h > 0) + f"{int(m):02}:" + f"{s:02}.{ms:01}"
-
-
-#endregion
-
-#region - START --------------------------------------------------------------------------------------------------------
+# ======================================================================================================================
+# region Cli
+# ======================================================================================================================
 
 if __name__ == '__main__':
     print()
@@ -305,6 +305,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-download', '-nd', action='store_true', help='Dont download, only list urls')
     parser.add_argument('-down', action='store_true', help='Counteracts --no-download')
     parser.add_argument('--show-command', action='store_true', help='Shows download command') # DEPRECATED !!
+    parser.add_argument('--no-cookies', action='store_true', help="Don't give cookies.txt to gallery-dl")
     
     parser.add_argument('-test', '--use-test-urls', action='store_true', help='Test downloading') # NOT IN USE
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Capture undefined arguments to pass to a shell script")
@@ -368,5 +369,3 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('\n\n[INTERRUPT] Script interrupted by user')
     print()
-
-#endregion
