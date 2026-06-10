@@ -68,6 +68,10 @@
         "tumblr": {
             "browser": "Brave",
             "folders": ["TumblrNaughty"]
+        },
+        "infini": {
+            "browser": "Brave",
+            "folders": ["infini.wtf"]
         }
     }
 }

@@ -61,9 +61,13 @@
             }
         },
 
-        
+
         "reddit":
         {
+            "api": "oauth",
+            "headers": {
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+            },
             // only spawn child extractors for links to specific sites
             "whitelist": ["imgur", "redgifs"],
 
@@ -73,7 +77,10 @@
             // transfer metadata to any child extractor as '_reddit'
             "parent-metadata": "_reddit",
 
-            "postprocessors": ["json-metadata", "scrape-reddit-comments"],
+            "postprocessors": [
+                "json-metadata",
+                "scrape-reddit-comments"
+            ],
 
             // title will be shortened to avoid OSError (uses "\fF " to work (f-string literal))
             // NOTE: reddit-redgifs will fail initially, then fallback to reddit url
@@ -141,9 +148,9 @@
             "api-key": "35f92a39466dd0a874c0598ed81f9e195ce0009c59521460f5f3785d83c47d3f1f5c26bb2ff68ba89052c5a965fe3c7745a85cca7707a5ad7284438a4de21f99",
             "user-id": "4446165"
         },
-        
 
-        
+
+
         "bluesky":
         {
             "postprocessors": ["json-metadata"],
@@ -174,8 +181,8 @@
             },
             "directory": ["pornhub", "{user|'_NoUser'}"]
         },
-        
-        
+
+
         "patreon":
         {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
@@ -185,9 +192,20 @@
             },
             "directory": ["patreon", "{creator['vanity']}"]
         },
-        
 
-        "pinterest": 
+
+        "subscribestar":
+        {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+            "postprocessors": ["json-metadata"],
+            "filename": {
+                "": "[{date}] {filename} (item-{num}) [{post_id}].{extension}"
+            },
+            "directory": ["subscribestar", "{author_name}"]
+        },
+
+
+        "pinterest":
         {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
             "postprocessors": ["json-metadata"],
@@ -196,7 +214,7 @@
             },
             "directory": ["pinterest", "{board['name']} by {board['owner']['username']}"]
         },
-        
+
         "kemono":
         {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
@@ -227,11 +245,17 @@
             }
         },
 
+        "infini":
+        {
+            "postprocessors": ["json-metadata"],
+            "filename": "some filename lmao",
+            "directory": ["reddit"]
+        },
 
         // ===============================================================
         // OTHER
         // ===============================================================
-        
+
         "ytdl":
         {
             "#": "enable 'ytdl' extractor",
@@ -349,7 +373,7 @@
     {
         // HUOM: min and max filesize options not currently working! (Jan 2025)
         // "filesize-min": "2048",
-        
+
         // restrict download speed to 1 MB/s
         "rate": "1M",
 
@@ -455,7 +479,7 @@
             "format": "title={title}\n content={content|description}\n likes={favorite_count|ups|likes|likes_count}\n author={author}\n upvote_ratio={upvote_ratio}\n views={views}\n tags={tags}\n"
         },
 
-        
+
         // Custom Execs
 
         "video-convert-mp4-call-python": {

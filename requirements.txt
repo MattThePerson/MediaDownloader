@@ -1,5 +1,5 @@
 gallery-dl
 yt-dlp
-beautifulsoup4==4.12.3
-markdown==3.7
-pydantic==1.10.22
+beautifulsoup4>=4.12.3
+markdown>=3.7
+pydantic
